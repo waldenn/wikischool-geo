@@ -1,0 +1,64 @@
+<html>
+
+<head>
+    <title>Wikischool Geo</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
+    <link rel="stylesheet" href="./styles/og.css?1" type="text/css" />
+
+    <script src="./libs/jquery-1.9.1.min.js"></script>
+    <script src="./libs/typeahead.bundle.min.js"></script>
+    <script src="./libs/papaparse.min.js"></script>
+
+    <script src="./libs/og.js?2"></script>
+    <script src="./libs/dexie.js"></script>
+
+    <base target="_self">
+
+</head>
+
+<body>
+
+    <div id="progressbar" style="width:5%">5%</div>
+    <span id="globe">
+
+      <form id="typeahead">
+        <div id="city" style="margin-bottom:12px">
+          <input type="text" id="city-typeahead" class="form-control typeahead" data-provide="typeahead" style="width:400px" placeholder=" place search">
+        </div>
+        <!--button id="typeahead-submit" type="submit" class="btn btn-default">Submit</button-->
+      </form>
+
+
+      <a id="goUpButton" class="geo-button" title="go up"><i class="far fa-arrow-alt-circle-up" style="color:black;"></i></a>
+      <a id="goDownButton" class="geo-button" title="go down" ><i class="far fa-arrow-alt-circle-down" style="color:black;"></i></a>
+
+      <a id="maximizeWindowButton" class="geo-button" title="maximize window"><i class="fas fa-arrows-alt" style="color:black;"></i></a>
+      <a id="maximizeMapButton" class="geo-button" title="maximize map"><i class="fas fa-arrows-alt-h" style="color:black;"></i></a>
+
+      <a id="compassButton" class="geo-button" title="align view to North-South"><i class="far fa-compass" style="color:black;"></i></a>
+
+      <!-- do not remove this copyright attribution link, see: LICENSE.txt -->
+      <div class="wikischoolAttribution" style="display: block;" title="project by wikischool.org"><a href="https://wikischool.org">&copy; wikischool.org</a></div>
+    </span>
+
+    <span id="info_pane">
+      <div id="info">
+        <h1>wikischool geo app</h1>
+      </div>
+      <span id="content_pane">
+        <div id="content">
+          <div id="mycontent"></div>
+          <iframe id="myframe" name="myframe" src="" allowfullscreen="1" sandbox="allow-same-origin allow-scripts allow-forms allow-top-navigation"></iframe>
+        </div>
+      </span>
+    </span>
+
+    <script src="./src/main.js?001"></script>
+
+</body>
+
+</html>
