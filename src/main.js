@@ -1245,14 +1245,12 @@ let checkHashParams = function() {
           }).then( nps => {
 
          newspapers = nps;
-
-          resetInfoPane( { 'type': 'city', 'city_latin': latinize( geohash.name ), 'lat': geohash.lat, 'lon' : geohash.lon } );
-
-          let pos_ = new og.LonLat( loc.longitude, loc.latitude, view_distance );
-          globe.planet.flyLonLat( pos_ );
-
       });
       */
+
+      resetInfoPane( { 'type': 'city', 'city_latin': latinize( geohash.name ), 'lat': geohash.lat, 'lon' : geohash.lon } );
+      let pos_ = new og.LonLat( loc.longitude, loc.latitude, view_distance );
+      globe.planet.flyLonLat( pos_ );
 
     } else {
       //console.log('no country data');
