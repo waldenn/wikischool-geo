@@ -2,13 +2,14 @@
 /*
  *  Copyright 2018, Jama Poulsen
  *
- *  See: LICENSE.txt
+ *  See: LICENSE.md
  */
 
 // globals
-let $; // jQuery
 
+let $; // jQuery
 let db; // indexedDB
+let autoCompleteEnabled = false;
 
 let osm = new og.layer.XYZ("OpenStreetMap", {
   isBaseLayer: true,
@@ -656,148 +657,154 @@ let initGeoData = function() {
 
 let initAutocomplete = function() {
 
-  let cities_ = new Bloodhound({
-    datumTokenizer: Bloodhound.tokenizers.obj.whitespace('value'),
-    queryTokenizer: Bloodhound.tokenizers.whitespace,
-    remote: '/app/geonames/complete.php?q=%QUERY',
-    limit: 20
-  });
+  if ( autoCompleteEnabled ){
 
-  cities_.initialize();
-
-  $('#city .typeahead').typeahead(null, {
-    name: 'city',
-    displayKey: 'value',
-    source: cities_.ttAdapter(),
-    templates: {
-      empty: function(ctx) {
-        let encodedStr = ctx.query.replace(/[\u00A0-\u9999<>\&]/gim, function(i) {
-          return '&#' + i.charCodeAt(0) + ';';
-        });
-        return '<div class="tt-suggestion">Sorry, no city names match <b>' + encodedStr + '</b>.</div>';
-      },
-      suggestion: function(ctx) {
-        let country = ctx.country || '',
-          s = '<p><strong>' + ctx.asciiname + '</strong>';
-        if (country && typeof ctx.admin1 === "string" && ctx.admin1.length > 0 && ctx.admin1.indexOf(ctx.asciiname) != 0) {
-          country = ctx.admin1 + ', ' + country;
-        }
-        if (country) {
-          country = ' - <small>' + country + '</small>';
-        }
-        return s + country + '</p>';
-      }
-    }
-
-  }).on('typeahead:selected', function(event, loc) {
-
-    // the second argument has the info you want
-    //console.log(loc);
-
-    // clearing the selection requires a typeahead method
-    //$(this).typeahead('setQuery', '');
-
-    city = loc.asciiname;
-    cname = loc.country;
-
-    for (let i = 0; i < countries.length; i++) {
-
-      //console.log (  countries.features[i].properties.admin.toLowerCase() );
-
-      if (countries[i].admin != undefined && countries[i].admin == cname) { // or .sovereignt
-        //console.log( countries[i] );
-        ccode2 = countries[i].iso_a2;
-        ccode3 = countries[i].adm0_a3_is;
-        //cname = countries.features[i].properties['brk_name'];
-        //country_extent = countries.features[i].properties.geometry.getExtent();
-      }
-    }
-
-    state = '';
-    console.log(cname, ccode2, ccode3);
-
-    let mark = [];
-
-    mark.push(new og.Entity({
-      'name': city,
-      'lonlat': [loc.longitude, loc.latitude, 0],
-      'billboard': {
-        'src': './assets/img/marker.png',
-        'size': [25, 25],
-        'color': 'yellow',
-        //'rotation': rnd(0, 360)
-      },
-      'label': {
-        'text': city,
-        'size': 40,
-        //'outline': 0,
-        'face': "Lucida Console",
-        'weight': "normal",
-        'color': "yellow",
-        'align': "right",
-        'offset': [13, 0],
-      },
-      'properties': {
-        //'bearing': rnd(0, 360),
-        'color': 'yellow',
-      }
-    }));
-
-    let mark_ = new og.EntityCollection({
-      'entities': mark,
-      'scaleByDistance': [300000, 500000, 10000000],
+    let cities_ = new Bloodhound({
+      datumTokenizer: Bloodhound.tokenizers.obj.whitespace('value'),
+      queryTokenizer: Bloodhound.tokenizers.whitespace,
+      remote: '/app/geonames/complete.php?q=%QUERY',
+      limit: 20
     });
 
-    globe.planet.entityCollections = []; // reset
+    cities_.initialize();
 
-    mark_.addTo(globe.planet);
+    $('#city .typeahead').typeahead(null, {
+      name: 'city',
+      displayKey: 'value',
+      source: cities_.ttAdapter(),
+      templates: {
+        empty: function(ctx) {
+          let encodedStr = ctx.query.replace(/[\u00A0-\u9999<>\&]/gim, function(i) {
+            return '&#' + i.charCodeAt(0) + ';';
+          });
+          return '<div class="tt-suggestion">Sorry, no city names match <b>' + encodedStr + '</b>.</div>';
+        },
+        suggestion: function(ctx) {
+          let country = ctx.country || '',
+            s = '<p><strong>' + ctx.asciiname + '</strong>';
+          if (country && typeof ctx.admin1 === "string" && ctx.admin1.length > 0 && ctx.admin1.indexOf(ctx.asciiname) != 0) {
+            country = ctx.admin1 + ', ' + country;
+          }
+          if (country) {
+            country = ' - <small>' + country + '</small>';
+          }
+          return s + country + '</p>';
+        }
+      }
+
+    }).on('typeahead:selected', function(event, loc) {
+
+      // the second argument has the info you want
+      //console.log(loc);
+
+      // clearing the selection requires a typeahead method
+      //$(this).typeahead('setQuery', '');
+
+      city = loc.asciiname;
+      cname = loc.country;
+
+      for (let i = 0; i < countries.length; i++) {
+
+        //console.log (  countries.features[i].properties.admin.toLowerCase() );
+
+        if (countries[i].admin != undefined && countries[i].admin == cname) { // or .sovereignt
+          //console.log( countries[i] );
+          ccode2 = countries[i].iso_a2;
+          ccode3 = countries[i].adm0_a3_is;
+          //cname = countries.features[i].properties['brk_name'];
+          //country_extent = countries.features[i].properties.geometry.getExtent();
+        }
+      }
+
+      state = '';
+      console.log(cname, ccode2, ccode3);
+
+      let mark = [];
+
+      mark.push(new og.Entity({
+        'name': city,
+        'lonlat': [loc.longitude, loc.latitude, 0],
+        'billboard': {
+          'src': './assets/img/marker.png',
+          'size': [25, 25],
+          'color': 'yellow',
+          //'rotation': rnd(0, 360)
+        },
+        'label': {
+          'text': city,
+          'size': 40,
+          //'outline': 0,
+          'face': "Lucida Console",
+          'weight': "normal",
+          'color': "yellow",
+          'align': "right",
+          'offset': [13, 0],
+        },
+        'properties': {
+          //'bearing': rnd(0, 360),
+          'color': 'yellow',
+        }
+      }));
+
+      let mark_ = new og.EntityCollection({
+        'entities': mark,
+        'scaleByDistance': [300000, 500000, 10000000],
+      });
+
+      globe.planet.entityCollections = []; // reset
+
+      mark_.addTo(globe.planet);
+
+      /*
+      // fetch newspapers of this country
+      fetch('./json/newspapers/' + ccode2 + '/' + ccode2 + '.json')
+
+        .then(r => {
+            return r.json();
+        }).then( nps => {
+
+          newspapers = nps;
+          resetInfoPane( { 'type': 'city', 'city_latin': latinize( city ), 'lat': loc.latitude, 'lon' : loc.longitude } );
+          let pos_ = new og.LonLat( loc.longitude, loc.latitude, view_distance );
+          globe.planet.flyLonLat( pos_ );
+
+      });
+      */
+
+
+    });
+
 
     /*
-    // fetch newspapers of this country
-    fetch('./json/newspapers/' + ccode2 + '/' + ccode2 + '.json')
-
-      .then(r => {
-          return r.json();
-      }).then( nps => {
-
-        newspapers = nps;
-        resetInfoPane( { 'type': 'city', 'city_latin': latinize( city ), 'lat': loc.latitude, 'lon' : loc.longitude } );
-        let pos_ = new og.LonLat( loc.longitude, loc.latitude, view_distance );
-        globe.planet.flyLonLat( pos_ );
-
+    $( "button#typeahead" ).submit(function( e ) {
+      console.log( e );
+      event.preventDefault();
     });
     */
 
+    /*
+    $('input#city-typeahead').keydown(function(event){
 
-  });
+      console.log( 'dont submit' );
+      console.log( event );
 
+      if(event.keyCode == 13) {
+        event.preventDefault();
+        return false;
+      }
+    });
+    */
 
-  /*
-  $( "button#typeahead" ).submit(function( e ) {
-    console.log( e );
-    event.preventDefault();
-  });
-  */
+    // https://wikischool.org/app/geo/#loc=global&layers=defaul&search=
+    //window.addEventListener("hashchange", newHash );
 
-  /*
-  $('input#city-typeahead').keydown(function(event){
+    //$(window).on( "hashchange", function( event ) {
+    //  console.log('hash changed' );
+    //});
 
-    console.log( 'dont submit' );
-    console.log( event );
+    $('form#typeahead').show();
 
-    if(event.keyCode == 13) {
-      event.preventDefault();
-      return false;
-    }
-  });
-  */
-
-  // https://wikischool.org/app/geo/#loc=global&layers=defaul&search=
-  //window.addEventListener("hashchange", newHash );
-
-  //$(window).on( "hashchange", function( event ) {
-  //  console.log('hash changed' );
-  //});
+  }
 
 };
 
