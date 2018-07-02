@@ -9,7 +9,7 @@
 
 let $; // jQuery
 let db; // indexedDB
-let autoCompleteEnabled = false;
+let autoCompleteEnabled = true;
 
 let osm = new og.layer.XYZ("OpenStreetMap", {
   isBaseLayer: true,
