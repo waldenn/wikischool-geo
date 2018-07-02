@@ -265,6 +265,7 @@ span#info_pane {
   position: absolute;
   width:50%;
   height:100%;
+  overflow-y: hidden !important;
 }
 span#content_pane {
 }
