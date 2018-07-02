@@ -717,7 +717,7 @@ let initAutocomplete = function() {
       }
 
       state = '';
-      console.log(cname, ccode2, ccode3);
+      //console.log(cname, ccode2, ccode3);
 
       let mark = [];
 
@@ -770,6 +770,10 @@ let initAutocomplete = function() {
 
       });
       */
+
+      resetInfoPane( { 'type': 'city', 'city_latin': latinize( city ), 'lat': loc.latitude, 'lon' : loc.longitude } );
+      let pos_ = new og.LonLat( loc.longitude, loc.latitude, view_distance );
+      globe.planet.flyLonLat( pos_ );
 
 
     });
