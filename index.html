@@ -45,14 +45,13 @@
     </span>
 
     <span id="info_pane">
-      <div id="info">
 
+      <div id="info">
         <div id="banner">
           <h1 id="banner-header"><a href="https://wikischool.org">wikischool</a> <a href="https://github.com/waldenn/wikischool-geo">geo</a> - discover the world</h1>
         </div>
-
-
       </div>
+
       <span id="content_pane">
         <div id="content">
           <div id="mycontent"></div>
@@ -61,44 +60,7 @@
       </span>
     </span>
 
-    <style>
-      #banner {
-        width: 100%;
-        height: 100%;
-        /* background-image: url('...'); */
-        background-position: center center;
-        background-size: cover;
-        background-repeat: no-repeat;  
-      }
-
-      #banner-header {
-        position: absolute;
-        margin-left: auto;
-        margin-right: auto;
-        left: 0;
-        right: 0;
-        text-shadow: 0 0 2px #020f18e6;
-        color: #ffffffe0;
-        /*font-family: Verdana;*/
-      }
-
-    #banner-header > a {
-        text-decoration: none;
-        color: rgba(218, 219, 250, 0.9);
-    }
-
-    </style>
-
-    <script type="text/javascript">
-      function randombg(){
-        let random = Math.floor(Math.random() * 15) + 0;
-        document.getElementById("banner").style.backgroundImage = 'url("./assets/wallpapers/' + random + '.jpg")';
-      }
-    </script>
-
     <script src="./src/main.js?001"></script>
-
-    </script>
 
 </body>
 
