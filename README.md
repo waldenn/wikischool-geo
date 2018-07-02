@@ -2,7 +2,7 @@
 
 # introduction
 
-A web application to discover the world!
+[wikischool-geo](https://wikischool.org/app/geo/) is web application to discover the world!
 
 This project is part of the [**wikischool.org**](https://wikischool.org) project.
 
