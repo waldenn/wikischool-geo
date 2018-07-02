@@ -494,7 +494,7 @@ li:not(.nps) > a:after { content:  ' +'; }
 li > a:only-child:after { content: ''; }
 
 a.geo-button:hover, div#ogLayerSwitcherButtonMaximize:hover {
-  background: rgba(189,206,226,0.6) !important;
+  background: rgba(230, 94, 65, 0.90) !important;
 }
 
 ul.nps {
