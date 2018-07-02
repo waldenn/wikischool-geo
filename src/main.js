@@ -9,7 +9,7 @@
 
 let $; // jQuery
 let db; // indexedDB
-let autoCompleteEnabled = false;
+let autoCompleteEnabled = true;
 
 let osm = new og.layer.XYZ("OpenStreetMap", {
   isBaseLayer: true,
@@ -381,9 +381,7 @@ let initGeoData = function() {
 
   countries_.addTo(globe.planet);
 
-  $('#progressbar').css({
-    'width': '100%'
-  }).html('100%');
+  $('#progressbar').css({ 'width': '100%' }).html('100%');
 
   for (let i = 0; i < countries.length; i++) {
     let c = countries[i];
@@ -1211,6 +1209,7 @@ let checkHashParams = function() {
   // URL hash input handling
   geohash = getHashParams();
   //console.log('user query: ', geohash);
+  $('#progressbar').hide();
 
   if (geohash.lat !== '') {
     // go to URL location
@@ -1299,6 +1298,7 @@ let checkHashParams = function() {
     globe.planet.flyLonLat(pos_);
 
   }
+
 }
 
 let addExtraLayers = function() {
