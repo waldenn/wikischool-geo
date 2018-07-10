@@ -14,14 +14,14 @@ let autoCompleteEnabled = false;
 let osm = new og.layer.XYZ("roadmap", {
   isBaseLayer: true,
   url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-  visibility: false,
+  visibility: true,
   attribution: '<a href="https://www.openstreetmap.org/copyright">&copy; OpenStreetMap</a>'
 });
 
 let sat = new og.layer.XYZ("Satellite", {
   isBaseLayer: true,
   url: "https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v10/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1IjoibWdldmxpY2giLCJhIjoiY2o0ZmVudncwMGZvbjJ3bGE0OGpsejBlZyJ9.RSRJLS0J_U9_lw1Ti1CmsQ",
-  visibility: true,
+  visibility: false,
   attribution: '<a href="https://www.mapbox.com">&copy; MapBox</a>'
 });
 
@@ -29,7 +29,7 @@ let placeMarkers = new og.layer.Vector("place markers", {
   'nodeCapacity': 100000,
   //'maxZoom': 9,
   'minZoom': 3,
-  'scaleByDistance': [0, 1500000, 25000000],
+  'scaleByDistance': [0, 1500000, 3000000],
   'fading': true
 });
 
@@ -187,6 +187,7 @@ let cities_loaded = false;
 let urbanizations;
 
 let newspapers = []; // FIXME
+let news = [];
 
 let geohash;
 
@@ -222,42 +223,44 @@ let initDB = function() {
       countries: "++, scalerank, admin, adm0_a3, name, brk_name, brk_group, pop_est, lastcensus, iso_a2, iso_a3",
       cities: "id, name, iso2, cc2, admin1, pop",
       urbanizations: "++",
+      news: "++, country, state, city",
     });
 
     // country fields: "scalerank, featurecla, labelrank, sovereignt, sov_a3, adm0_dif, level, type, admin, adm0_a3, geou_dif, geounit, gu_a3, su_dif, subunit, su_a3, brk_diff, name, name_long, brk_a3, brk_name, brk_group, abbrev, postal, formal_en, formal_fr, note_adm0, note_brk, name_sort, name_alt, mapcolor7, mapcolor8, mapcolor9, mapcolor13, pop_est, gdp_md_est, pop_year, lastcensus, gdp_year, economy, income_grp, wikipedia, fips_10, iso_a2, iso_a3, iso_n3, un_a3, wb_a2, wb_a3, woe_id, adm0_a3_is, adm0_a3_us, adm0_a3_un, adm0_a3_wb, continent, region_un, subregion, region_wb, name_len, long_len, abbrev_len, tiny, homepart, geometry_type, geometry_coordinates",
 
 		// city fields: "id, name, name_ascii, aliases, lat, lon, fclass, fcode, iso2, cc2, admin1, admin2, admin3, admin4, pop, elev, dem, tz",
 
-    $('#progressbar').css({
-      'width': '10%'
-    }).html('10% ...loading countries');
+    $('#progressbar').css({ 'width': '10%' }).html('10% ...loading countries');
 
     if (exists) {
 
       db.countries.toArray(function(c) {
         countries = c;
 
-        $('#progressbar').css({
-          'width': '20%'
-        }).html('20% ...loading cities');
+        $('#progressbar').css({ 'width': '20%' }).html('20% ...loading cities');
 
         db.cities.toArray(function(cit) {
           cities = cit;
           cities_loaded = true;
           //console.log('retrieved countries and cities');
-          $('#progressbar').css({
-            'width': '60%'
-          }).html('60% ...loading urbanizations');
+          $('#progressbar').css({ 'width': '60%' }).html('60% ...loading urbanizations');
 
           db.urbanizations.toArray(function(urb) {
 
             urbanizations = urb;
             //console.log('retrieved all countries, cities, and urbanizations from indexedDB');
-            $('#progressbar').css({
-              'width': '80%'
-            }).html('80% ...loading visuals');
 
-            main();
+            $('#progressbar').css({ 'width': '70%' }).html('70% ...loading news sources');
+
+            db.news.toArray(function(news_) {
+
+              //news = news_;
+
+              $('#progressbar').css({ 'width': '80%' }).html('80% ...loading visuals');
+              main();
+
+            });
+
           })
         })
       })
@@ -266,12 +269,10 @@ let initDB = function() {
 
       // fetch data for DB
 
-      $('#progressbar').css({
-        'width': '20%'
-      }).html('20% ...fetching countries');
+      $('#progressbar').css({ 'width': '20%' }).html('20% ...fetching countries');
       //console.log("Database does not yet exist");
 
-      fetch("./data/json/countries.json?v012")
+      fetch("./data/json/countries.json?v014")
 
         .then(r => {
           return r.json();
@@ -279,15 +280,11 @@ let initDB = function() {
 
           countries = countries_;
 
-          $('#progressbar').css({
-            'width': '30%'
-          }).html('20% ...loading countries');
+          $('#progressbar').css({ 'width': '30%' }).html('20% ...loading countries');
 
           // insert data into DB
           db.countries.bulkAdd(countries).then(function(lastKey) {
-            $('#progressbar').css({
-              'width': '30%'
-            }).html('30% ...fetching cities');
+            $('#progressbar').css({ 'width': '30%' }).html('30% ...fetching cities');
 
             //console.log('Done adding ' + countries.length +  ' countries');
 
@@ -301,9 +298,7 @@ let initDB = function() {
               fastMode: true,
 
               complete: function(cities_) {
-                $('#progressbar').css({
-                  'width': '40%'
-                }).html('40% ...storing cities in cache');
+                $('#progressbar').css({ 'width': '40%' }).html('40% ...storing cities in cache');
 
                 cities = cities_.data;
                 //console.log( 'cities loaded' ); 
@@ -312,9 +307,7 @@ let initDB = function() {
 
                   //console.log('Done adding ' + cities.length +  ' cities');
                   cities_loaded = true;
-                  $('#progressbar').css({
-                    'width': '60%'
-                  }).html('60% ...loading urbanizations');
+                  $('#progressbar').css({ 'width': '60%' }).html('60% ...loading urbanizations');
 
                   fetch("./data/json/urbanizations.json?v001")
                     .then(r => {
@@ -327,10 +320,35 @@ let initDB = function() {
                       db.urbanizations.bulkAdd(urbanizations).then(function(lastKey) {
 
                         //console.log('Done adding ' + urbanizations.length +  ' urbanizations');
-                        $('#progressbar').css({
-                          'width': '80%'
-                        }).html('80% ...loading visuals');
-                        main();
+
+                        $('#progressbar').css({ 'width': '70%' }).html('70% ...loading news sources');
+
+                        // add news sources
+                        Papa.parse('./data/csv/news.csv', {
+
+                          download: true,
+                          delimiter: ",",
+                          header: true,
+                          fastMode: true,
+
+                          complete: function(news_) {
+
+                            //news = news_.data;
+
+                            $('#progressbar').css({ 'width': '75%' }).html('75% ...caching news sources');
+
+                            db.news.bulkAdd(news).then(function(lastKey) {
+
+                              //console.log(news);
+
+                              $('#progressbar').css({ 'width': '80%' }).html('80% ...loading visuals');
+                              main();
+
+                            });
+
+                          },
+
+                        });
 
                       }).catch(Dexie.BulkError, function(e) {
                         //console.log('urbanization failures: ' + e.failures.length );
@@ -344,9 +362,7 @@ let initDB = function() {
 
             });
 
-            $('#progressbar').css({
-              'width': '40%'
-            }).html('40% ...loading cities');
+            $('#progressbar').css({ 'width': '40%' }).html('40% ...loading cities');
 
           }).catch(Dexie.BulkError, function(e) {
             console.log('failures: ' + e.failures.length);
@@ -525,26 +541,24 @@ let initGeoData = function() {
         placeMarkers.setEntities(markers);
 
         // fetch newspapers of this country
-        fetch('./data/json/newspapers.json?002') // TOFIX: merge JSON-files into on one large file and load into DB
+        db.news.where('country').equals(ccode2).toArray().then(function(matches) {
 
-          .then(r => {
-            return r.json();
-          }).then(nps => {
+          //console.log("nr. of matches:  " + matches.length );
+          news = matches;
 
-            newspapers = nps.sortBy('name');;
+          news = news.sortBy('name');;
 
-            if (state === '') { // get country cities
-              resetInfoPane({
-                'type': 'country'
-              });
-            } else {
-              resetInfoPane({
-                'type': 'state'
-              });
-            }
+          if (state === '') { // get country cities
+            resetInfoPane({
+              'type': 'country'
+            });
+          } else {
+            resetInfoPane({
+              'type': 'state'
+            });
+          }
 
-          });
-
+        })
 
       })
       .catch(function(e) {
@@ -661,7 +675,7 @@ let initAutocomplete = function() {
       datumTokenizer: Bloodhound.tokenizers.obj.whitespace('value'),
       queryTokenizer: Bloodhound.tokenizers.whitespace,
       remote: '/app/geonames/complete.php?q=%QUERY',
-      limit: 20
+      limit: 30
     });
 
     cities_.initialize();
@@ -797,7 +811,6 @@ let initAutocomplete = function() {
     });
     */
 
-    // https://wikischool.org/app/geo/#loc=global&layers=defaul&search=
     //window.addEventListener("hashchange", newHash );
 
     //$(window).on( "hashchange", function( event ) {
@@ -899,6 +912,8 @@ function toggleFullScreen() {
 
 let resetInfoPane = function(options) {
 
+  console.log( ccode3, ccode2, cname );
+
   let flag = '';
 
   if (!options.extra) { // country, state or city
@@ -923,14 +938,6 @@ let resetInfoPane = function(options) {
     let wikipedia_main = '<a id="wikipedia_main" target="myframe" href="https://en.m.wikipedia.org/wiki/' + options.name + specifier + '"> <i class="fab fa-wikipedia-w"></i> main </a>';
     let wikipedia_search = '<a target="myframe" href="https://en.m.wikipedia.org/w/index.php?title=Special:Search&search=%22' + options.name + '%22&fulltext=Search"> <i class="fab fa-wikipedia-w"></i> search  </a>';
 
-    /*
-       let wikischool = '<a href="#"><i class="fas fa-wikischool"></i> </a>';
-       let wikischool_main = '<a target="myframe" href="https://wikischool.org/search/' + cname + '"> <i class="fas fa-university"></i> main </a>';
-       let wikischool_wikipedia = '<a target="myframe" href="https://wikischool.org/search/' + cname + '#wikipedia"> <i class="fas fa-university"></i> wikipedia </a>';
-       let wikischool_news = '<a target="myframe" href="https://wikischool.org/search/' + cname + '#news"> <i class="fas fa-university"></i> news </a>';
-       let wikischool_youtube = '<a target="myframe" href="https://wikischool.org/search/' + cname + '#youtube"> <i class="fas fa-university"></i> video</a>';
-        */
-
     let web_images = '<a id="web_images" target="myframe" title="photos" href="https://www.bing.com/images/search?&q=%22' + options.name + '%22' + specifier.toLowerCase() + '&qft=+filterui:photo-photo&FORM=IRFLTR"> <i class="far fa-images"></i>&nbsp; </a>';
     let videos = '<a target="myframe" title="videos" href="https://toogl.es/#/search/' + encodeURI(options.name + specifier.toLowerCase()) + '"> <i class="fas fa-video"></i>&nbsp; </a>';
     let searx = '<a target="_blank" title="search" href="' + searx_host + '/?q=' + options.name + specifier.toLowerCase() + '"> <i class="fab fa-searchengin"></i>&nbsp; </a>';
@@ -949,21 +956,16 @@ let resetInfoPane = function(options) {
 
       '<li><a href="#" title="wikipedia menu"><i class="fab fa-wikipedia-w"></i> </a> <ul> <li>' + wikipedia + '</li> <li>' + wikipedia_main + '</li> <li>' + wikipedia_search + '</li></ul>' +
 
-      //'<li><a href="#" title="wikischool menu"><i class="fas fa-university"></i></a> <ul> <li>' + wikischool + '</li> <li>' + wikischool_main + ' </li> <li>' + wikischool_wikipedia + '</li> <li>' + wikischool_news + '</li> <li>' + wikischool_youtube + '</li></ul> ' +
-
       '<li>' + web_images + '</li>' +
       '<li>' + videos + '</li>' +
       '<li>' + searx + '</li>' +
 
-      //'<li><a href="#" title="newspapers menu"><i class="far fa-newspaper"></i> </a> <ul class="nps">' + nps + '</li></ul>' +
       //'<li>'+ web_earth +'</li>'+
 
       '</nav>' +
 
       '</div>'
     );
-
-
 
 
   } else if (state !== '' && city == '') { // state
@@ -983,13 +985,10 @@ let resetInfoPane = function(options) {
 
     let wikischool = '<a href="#"><i class="fas fa-wikischool"></i> </a>';
     let wikischool_main = '<a target="myframe" href="https://wikischool.org/search/' + state + ', ' + cname + '"> <i class="fas fa-university"></i> main </a>';
-    let wikischool_wikipedia = '<a target="myframe" href="https://wikischool.org/search/' + state + ', ' + cname + '#wikipedia"> <i class="fas fa-university"></i> wikipedia </a>';
-    let wikischool_news = '<a target="myframe" href="https://wikischool.org/search/' + state + ', ' + cname + '#news"> <i class="fas fa-university"></i> news </a>';
-    let wikischool_youtube = '<a target="myframe" href="https://wikischool.org/search/' + state + ', ' + cname + '#youtube"> <i class="fas fa-university"></i> video</a>';
 
     let web_images = '<a id="web_images" target="myframe" title="photos" href="https://www.bing.com/images/search?&q=%22' + state + ', ' + cname + '%22&qft=+filterui:photo-photo&FORM=IRFLTR"> <i class="far fa-images"></i>&nbsp; </a>';
     let searx = '<a target="_blank" title="search" href="' + searx_host + '/?q=' + encodeURI(state + ', ' + cname) + '"> <i class="fab fa-searchengin"></i>&nbsp; </a>';
-    let radio = '<a target="myframe" title="radio stations" href="https://www.internet-radio.com/search/?radio=' + state.toLowerCase() + '"> <i class="fas fa-volume-up"></i>&nbsp; </a>';
+    let radio = '<a target="myframe" title="radio stations" href="https://tunein.com/search/?query=' + state.toLowerCase() + '"> <i class="fas fa-volume-up"></i>&nbsp; </a>';
 
     //let state_temp = state.replace(/\s+/g, '-').toLowerCase();
     //let newspaper = '<a target="myframe" title="newspapers" href="https://www.w3newspapers.com/' + state_temp + '/"> <i class="far fa-newspaper"></i>&nbsp;</a>';
@@ -1008,7 +1007,7 @@ let resetInfoPane = function(options) {
 
       '<li><a href="#" title="wikipedia menu"><i class="fab fa-wikipedia-w"></i> </a> <ul> <li>' + wikipedia + '</li> <li>' + wikipedia_main + '</li> <li>' + wikipedia_portal + ' </li> <li>' + wikipedia_outline + ' </li> <li>' + wikipedia_demographics + ' </li> <li>' + wikipedia_history + '</li> <li>' + wikipedia_culture + '</li> <li>' + wikipedia_art + '</li> <li>' + wikipedia_search + '</li></ul>' +
 
-      '<li><a href="#" title="wikischool menu"><i class="fas fa-university"></i></a> <ul> <li>' + wikischool + '</li> <li>' + wikischool_main + ' </li> <li>' + wikischool_wikipedia + '</li> <li>' + wikischool_news + '</li> <li>' + wikischool_youtube + '</li></ul> ' +
+      '<li><a href="#" title="wikischool menu"><i class="fas fa-university"></i></a> <ul> <li>' + wikischool + '</li> <li>' + wikischool_main + ' </li> </ul> ' +
 
       '<li>' + web_images + '</li>' +
       '<li>' + videos + '</li>' +
@@ -1039,27 +1038,18 @@ let resetInfoPane = function(options) {
 
     let wikischool = '<a href="#"><i class="fas fa-wikischool"></i> </a>';
     let wikischool_main = '<a target="myframe" href="https://wikischool.org/search/' + cname + '"> <i class="fas fa-university"></i> main </a>';
-    let wikischool_wikipedia = '<a target="myframe" href="https://wikischool.org/search/' + cname + '#wikipedia"> <i class="fas fa-university"></i> wikipedia </a>';
-    let wikischool_news = '<a target="myframe" href="https://wikischool.org/search/' + cname + '#news"> <i class="fas fa-university"></i> news </a>';
-    let wikischool_youtube = '<a target="myframe" href="https://wikischool.org/search/' + cname + '#youtube"> <i class="fas fa-university"></i> video</a>';
 
     let web_images = '<a id="web_images" target="myframe" title="photos" href="https://www.bing.com/images/search?&q=%22' + cname + '%22&qft=+filterui:photo-photo&FORM=IRFLTR"> <i class="far fa-images"></i>&nbsp; </a>';
     let videos = '<a target="myframe" title="videos" href="https://toogl.es/#/search/' + encodeURI(cname) + '"> <i class="fas fa-video"></i>&nbsp; </a>';
     let searx = '<a target="_blank" title="search" href="' + searx_host + '/?q=' + cname + '"> <i class="fab fa-searchengin"></i>&nbsp; </a>';
-    let radio = '<a target="myframe" title="radio stations" href="https://www.internet-radio.com/search/?radio=' + cname.toLowerCase() + '"> <i class="fas fa-volume-up"></i>&nbsp; </a>';
+    let radio = '<a target="myframe" title="radio stations" href="https://tunein.com/search/?query=' + cname.toLowerCase() + '"> <i class="fas fa-volume-up"></i>&nbsp; </a>';
 
     let cname_temp = cname.replace(/\s+/g, '-').toLowerCase();
-    //let newspaper = '<a target="myframe" title="newspapers" href="https://www.w3newspapers.com/' + cname_temp + '/"> <i class="far fa-newspaper"></i>&nbsp;</a>';
-
-    let newspaper2 = '<a href="#"><i class="far fa-newspaper"></i> </a>';
 
     let nps = '';
-    //console.log( newspapers );
 
-    for (let i = 0; i < newspapers.length; i++) {
-      //console.log( newspapers[i].link, newspapers[i].name );
-      nps = nps + '<li class="nps"><a target="_blank" href="https://translate.google.com/translate?js=n&sl=auto&tl=destination_language&u=http://' + newspapers[i].link + ' ">' + newspapers[i].name + '</a> </li>';
-      //nps = nps + '<li class="nps"><a target="myframe" href="https://' + newspapers[i].link + '">' + newspapers[i].name + '</a> <a target="_blank" href="https://translate.google.com/translate?js=n&sl=auto&tl=destination_language&u=http://'+ newspapers[i].link +' "><i class="fas fa-language"></i></a> </li>';
+    for (let i = 0; i < news.length; i++) {
+      nps = nps + '<li class="nps"><a target="_blank" href="https://translate.google.com/translate?js=n&sl=auto&tl=destination_language&u=http://' + news[i].link + ' ">' + news[i].name + '</a> </li>';
     }
 
     let web_earth = '<a target="_blank" href="https://earth.google.com/web/@' + options.lat + ',' + options.lon + ',146.726a,' + view_distance / 2 + 'd,50y,0h,25t,0r"> <i class="fas fa-globe"></i>&nbsp;</a>';
@@ -1076,7 +1066,7 @@ let resetInfoPane = function(options) {
 
       '<li><a href="#" title="wikipedia menu"><i class="fab fa-wikipedia-w"></i> </a> <ul> <li>' + wikipedia + '</li> <li>' + wikipedia_main + '</li> <li>' + wikipedia_portal + ' </li> <li>' + wikipedia_outline + ' </li> <li>' + wikipedia_demographics + ' </li> <li>' + wikipedia_history + '</li> <li>' + wikipedia_culture + '</li> <li>' + wikipedia_art + '</li> <li>' + wikipedia_search + '</li></ul>' +
 
-      '<li><a href="#" title="wikischool menu"><i class="fas fa-university"></i></a> <ul> <li>' + wikischool + '</li> <li>' + wikischool_main + ' </li> <li>' + wikischool_wikipedia + '</li> <li>' + wikischool_news + '</li> <li>' + wikischool_youtube + '</li></ul> ' +
+      '<li><a href="#" title="wikischool menu"><i class="fas fa-university"></i></a> <ul> <li>' + wikischool + '</li> <li>' + wikischool_main + ' </li> </ul> ' +
 
       '<li>' + web_images + '</li>' +
       '<li>' + videos + '</li>' +
@@ -1122,21 +1112,15 @@ let resetInfoPane = function(options) {
     let web_images = '<a target="myframe" title="photos" href="https://www.bing.com/images/search?&q=%22' + options.city_latin + '%22' + state_name + ', ' + cname + '&qft=+filterui:photo-photo&FORM=IRFLTR"> <i class="far fa-images"></i> &nbsp;</a>';
     let videos = '<a target="myframe" title="videos" href="https://toogl.es/#/search/' + encodeURI(options.city_latin + state_name + ', ' + cname) + '"> <i class="fas fa-video"></i>&nbsp; </a>';
     let searx = '<a target="_blank" title="search" href="' + searx_host + '/?q=%22' + encodeURI(options.city_latin + state_name + '", ' + cname) + '"> <i class="fab fa-searchengin"></i>&nbsp; </a>';
-    let radio = '<a target="myframe" title="radio stations" href="https://www.internet-radio.com/search/?radio=' + state_name + ' ' + cname.toLowerCase() + '"> <i class="fas fa-volume-up"></i>&nbsp; </a>';
+    let radio = '<a target="myframe" title="radio stations" href="https://tunein.com/search/?query=' + options.city_latin + '"> <i class="fas fa-volume-up"></i>&nbsp; </a>';
 
     let cname_temp = cname.replace(/\s+/g, '-').toLowerCase();
-    //let newspaper = '<a target="myframe" title="newspapers" href="https://www.w3newspapers.com/' + cname_temp + '/"> <i class="far fa-newspaper"></i>&nbsp;</a>';
-
-
-    let newspaper2 = '<a href="#"><i class="far fa-newspaper"></i> </a>';
 
     let nps = '';
 
-    for (let i = 0; i < newspapers.length; i++) {
-      //console.log( newspapers[i].link, newspapers[i].name );
-      nps = nps + '<li class="nps"><a target="_blank" href="https://translate.google.com/translate?js=n&sl=auto&tl=destination_language&u=http://' + newspapers[i].link + ' ">' + newspapers[i].name + '</a> </li>';
+    for (let i = 0; i < news.length; i++) {
+      nps = nps + '<li class="nps"><a target="_blank" href="https://translate.google.com/translate?js=n&sl=auto&tl=destination_language&u=http://' + news[i].link + ' ">' + news[i].name + '</a> </li>';
 
-      //nps = nps + '<li class="nps"><a target="myframe" href="https://' + newspapers[i].link + '">' + newspapers[i].name + '</a> <a target="_blank" href="https://translate.google.com/translate?js=n&sl=auto&tl=destination_language&u=http://'+ newspapers[i].link +' "><i class="fas fa-language"></i></a> </li>';
     }
 
     // see: https://www.gearthblog.com/blog/archives/2017/04/fun-stuff-new-google-earth-url.html
@@ -1153,9 +1137,9 @@ let resetInfoPane = function(options) {
       '<nav><ul>' +
 
       '<li><a href="#" title="wikipedia menu"><i class="fab fa-wikipedia-w"></i> </a> <ul> <li>' + wikipedia + '</li> <li>' + wikipedia_main + '</li> <li>' + wikipedia_search + ' </li>  </li></ul>' +
-      //'<li><a href="#"><i class="fab fa-wikipedia-w"></i> </a> <ul> <li>' + wikipedia + '</li> <li>' + wikipedia_main + '</li> <li>'+ wikipedia_portal + ' </li> <li>' + wikipedia_outline + ' </li> <li>' + wikipedia_demographics + ' </li> <li>'  + wikipedia_history + '</li> <li>' + wikipedia_culture + '</li> <li>' + wikipedia_art + '</li></ul>' +
+      // FIXME: add wikipedia_history for capitals  (and other populated cities)
 
-      '<li><a href="#" title="wikischool menu"><i class="fas fa-university"></i></a> <ul>  <li>' + wikischool_main + ' </li> <li>' + wikischool_wikipedia + '</li> <li>' + wikischool_news + '</li> <li>' + wikischool_youtube + '</li></ul> ' +
+      '<li><a href="#" title="wikischool menu"><i class="fas fa-university"></i></a> <ul>  <li>' + wikischool_main + ' </li> </ul> ' +
 
       '<li>' + web_images + '</li>' +
       '<li>' + videos + '</li>' +
@@ -1201,7 +1185,6 @@ let getHashParams = function() {
 let newHash = function() {
   geohash = getHashParams();
   //console.log('...hash changed: user query: ', geohash);
-
 }
 
 let checkHashParams = function() {
@@ -1235,21 +1218,19 @@ let checkHashParams = function() {
 
     if (ccode2 !== undefined && (cities_loaded || geohash.lat !== '')) {
 
-      /*
-      // fetch newspapers of this country
-      fetch('./json/newspapers/' + ccode2 + '/' + ccode2 + '.json')
+        // fetch newspapers of this country
+        db.news.where('country').equals(ccode2).toArray().then(function(matches) {
 
-          .then(r => {
-              return r.json();
-          }).then( nps => {
+          //console.log("nr. of matches:  " + matches.length );
+          news = matches;
 
-         newspapers = nps;
-      });
-      */
+          news = news.sortBy('name');;
 
-      resetInfoPane( { 'type': 'city', 'city_latin': latinize( geohash.name ), 'lat': geohash.lat, 'lon' : geohash.lon } );
-      let pos_ = new og.LonLat( loc.longitude, loc.latitude, view_distance );
-      globe.planet.flyLonLat( pos_ );
+          resetInfoPane( { 'type': 'city', 'city_latin': latinize( geohash.name ), 'lat': geohash.lat, 'lon' : geohash.lon } );
+          let pos_ = new og.LonLat( geohash.lon, geohash.lat, view_distance );
+          globe.planet.flyLonLat( pos_ );
+
+        })
 
     } else {
       //console.log('no country data');

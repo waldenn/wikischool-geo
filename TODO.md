@@ -1,12 +1,6 @@
 TODO:
 
   - BUG: US state resetInfoPane() not working anymore
-  - BUG: the autocomplete list is often incomplete
-    - show matches in a scrollable list (so more can be displayed)
-    - sort by relevance (server-side)
-      - countries first (may need to be added to the database first)
-      - capitals and similar administrative types
-      - larger populations
   - BUG: always make "go up/down" buttons work (when possible)
     - from URL hash
     - from autocomplete
