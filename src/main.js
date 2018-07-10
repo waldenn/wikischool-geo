@@ -324,7 +324,7 @@ let initDB = function() {
                         $('#progressbar').css({ 'width': '70%' }).html('70% ...loading news sources');
 
                         // add news sources
-                        Papa.parse('./data/csv/news.csv', {
+                        Papa.parse('./data/csv/news.csv?001', {
 
                           download: true,
                           delimiter: ",",
@@ -333,13 +333,11 @@ let initDB = function() {
 
                           complete: function(news_) {
 
-                            //news = news_.data;
+                            news = news_.data;
 
                             $('#progressbar').css({ 'width': '75%' }).html('75% ...caching news sources');
 
                             db.news.bulkAdd(news).then(function(lastKey) {
-
-                              //console.log(news);
 
                               $('#progressbar').css({ 'width': '80%' }).html('80% ...loading visuals');
                               main();
@@ -1307,7 +1305,6 @@ let checkHashParams = function() {
         // fetch newspapers of this country
         db.news.where('country').equals(ccode2).toArray().then(function(matches) {
 
-          //console.log("nr. of matches:  " + matches.length );
           news = matches;
 
           news = news.sortBy('name');;
