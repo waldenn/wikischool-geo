@@ -193,7 +193,7 @@ let geohash;
 
 let maximized_map = false;
 
-let searx_host = 'https://searx.dk';
+let searx_host = 'https://searx.xyz';
 
 Array.prototype.sortBy = function(p) {
   return this.slice(0).sort(function(a, b) {
@@ -219,7 +219,7 @@ let initDB = function() {
     // declare database
     db = new Dexie("wikischool-geo");
 
-    db.version(6).stores({
+    db.version(1).stores({
       countries: "++, scalerank, admin, adm0_a3, name, brk_name, brk_group, pop_est, lastcensus, iso_a2, iso_a3",
       cities: "id, name, iso2, cc2, admin1, pop",
       urbanizations: "++",
@@ -438,11 +438,13 @@ let initGeoData = function() {
 
     globe.planet.flyExtent(e.pickingObject.geometry.getExtent());
     country_extent = e.pickingObject.geometry.getExtent();
+    //console.log( e.pickingObject.geometry );
 
     ccode2 = obj.iso_a2;
     ccode3 = obj.adm0_a3_is;
     cname = obj.brk_name;
     state_code = obj.name;
+    city = '';
 
     //console.log( ccode2, ccode3, cname, state_code );
 
@@ -505,35 +507,106 @@ let initGeoData = function() {
 
           let ri = c[i];
 
-          markers.push(new og.Entity({
-            'lonlat': [parseFloat(ri.lon), parseFloat(ri.lat)],
-            'billboard': {
-              'src': './assets/img/marker.png',
-              'width': 22,
-              'height': 22,
-              'offset': [0, 6],
-            },
-            'properties': {
-              'name': ri.name
-            }
-          }));
+          if ( ri.fcode === 'PPLC' ){ // capital
 
-          labels.push(new og.Entity({
-            'lonlat': [parseFloat(ri.lon), parseFloat(ri.lat)],
-            'label': {
-              'text': ri.name,
-              'size': 25,
-              //'outline': 0,
-              'face': "Lucida Console",
-              'weight': "normal",
-              'color': "#F2F2F2",
-              'align': "right",
-              'offset': [13, 0]
-            },
-            'properties': {
-              'name': ri.name
-            }
-          }));
+            markers.push(new og.Entity({
+              'lonlat': [parseFloat(ri.lon), parseFloat(ri.lat)],
+              'billboard': {
+                'src': './assets/img/capital_marker.png',
+                'width': 75,
+                'height': 75,
+                'offset': [0, 6],
+              },
+              'properties': {
+                'name': ri.name
+              }
+            }));
+
+            labels.push(new og.Entity({
+              'lonlat': [parseFloat(ri.lon), parseFloat(ri.lat)],
+              'label': {
+                'text': ri.name,
+                'size': 100,
+                //'outline': 0,
+                'face': "Lucida Console",
+                'weight': "bold",
+                'color': "#F2F2F2",
+                'align': "right",
+                'offset': [25, 10]
+              },
+              'properties': {
+                'name': ri.name
+              }
+            }));
+
+          }
+          else if ( ri.fcode === 'PPL' ){ // populated place
+
+            markers.push(new og.Entity({
+              'lonlat': [parseFloat(ri.lon), parseFloat(ri.lat)],
+              'billboard': {
+                'src': './assets/img/marker.png',
+                'width': 35,
+                'height': 35,
+                'offset': [0, 6],
+              },
+              'properties': {
+                'name': ri.name
+              }
+            }));
+
+            labels.push(new og.Entity({
+              'lonlat': [parseFloat(ri.lon), parseFloat(ri.lat)],
+              'label': {
+                'text': ri.name,
+                'size': 35,
+                //'outline': 0,
+                'face': "Lucida Console",
+                'weight': "normal",
+                'color': "#F2F2F2",
+                'align': "right",
+                'offset': [13, 0]
+              },
+              'properties': {
+                'name': ri.name
+              }
+            }));
+
+
+          }
+          else {
+
+            markers.push(new og.Entity({
+              'lonlat': [parseFloat(ri.lon), parseFloat(ri.lat)],
+              'billboard': {
+                'src': './assets/img/marker.png',
+                'width': 20,
+                'height': 20,
+                'offset': [0, 6],
+              },
+              'properties': {
+                'name': ri.name
+              }
+            }));
+
+            labels.push(new og.Entity({
+              'lonlat': [parseFloat(ri.lon), parseFloat(ri.lat)],
+              'label': {
+                'text': ri.name,
+                'size': 25,
+                //'outline': 0,
+                'face': "Lucida Console",
+                'weight': "normal",
+                'color': "#F2F2F2",
+                'align': "right",
+                'offset': [13, 0]
+              },
+              'properties': {
+                'name': ri.name
+              }
+            }));
+
+          }
 
         }
 
@@ -566,7 +639,7 @@ let initGeoData = function() {
       });
 
 
-    /*
+    /* FIXME
 
           let markers = new og.EntityCollection({
               'entities': entities,
@@ -767,26 +840,19 @@ let initAutocomplete = function() {
 
       mark_.addTo(globe.planet);
 
-      /*
       // fetch newspapers of this country
-      fetch('./json/newspapers/' + ccode2 + '/' + ccode2 + '.json')
+      db.news.where('country').equals(ccode2).toArray().then(function(matches) {
 
-        .then(r => {
-            return r.json();
-        }).then( nps => {
+        //console.log("nr. of matches:  " + matches.length );
+        news = matches;
 
-          newspapers = nps;
-          resetInfoPane( { 'type': 'city', 'city_latin': latinize( city ), 'lat': loc.latitude, 'lon' : loc.longitude } );
-          let pos_ = new og.LonLat( loc.longitude, loc.latitude, view_distance );
-          globe.planet.flyLonLat( pos_ );
+        news = news.sortBy('name');;
 
-      });
-      */
+        resetInfoPane( { 'type': 'city', 'city_latin': latinize( city ), 'lat': loc.latitude, 'lon' : loc.longitude } );
+        let pos_ = new og.LonLat( loc.longitude, loc.latitude, view_distance );
+        globe.planet.flyLonLat( pos_ );
 
-      resetInfoPane( { 'type': 'city', 'city_latin': latinize( city ), 'lat': loc.latitude, 'lon' : loc.longitude } );
-      let pos_ = new og.LonLat( loc.longitude, loc.latitude, view_distance );
-      globe.planet.flyLonLat( pos_ );
-
+      })
 
     });
 
@@ -829,37 +895,37 @@ let initButtonEvents = function() {
 
   $("#goUpButton").on("click", function() {
 
-    console.log(city, state, cname);
+    //console.log(city, state, cname);
 
     if (cname == undefined) {
-      console.log('do nothing');
+      //console.log('do nothing');
     } else if ((cname !== undefined || cname !== '') && (city == undefined || city == '')) {
-      console.log('back to planet');
+      //console.log('back to planet');
       globe.planet.camera.setAltitude(20000000);
       cname = '';
       city = '';
     } else if (city !== undefined || city !== '') {
-      console.log('back to country');
+      //console.log('back to country');
       globe.planet.flyExtent(country_extent);
       city = '';
       resetInfoPane({
         'type': 'country'
       });
     } else if (state !== '') {
-      console.log('back to US country');
+      //console.log('back to US country');
     } else {
-      console.log('do nothing');
+      //console.log('do nothing');
     }
 
   });
 
   $("#maximizeWindowButton").on("click", function() {
-    console.log('compass');
+    //console.log('maximize window');
     toggleFullScreen()
   });
 
   $("#maximizeMapButton").on("click", function() {
-    console.log('toggle maximize map');
+    //console.log('maximize map');
     if (maximized_map) { // go to normal view
       $('span#globe').css('width', '50%');
       $('span#info_pane').show();
@@ -873,7 +939,7 @@ let initButtonEvents = function() {
   });
 
   $("#compassButton").on("click", function() {
-    console.log('compass');
+    //console.log('compass');
     //console.log ( globe.planet.getHeight() );
     //console.log ( globe.planet.getExtentPosition() );
   });
@@ -912,7 +978,7 @@ function toggleFullScreen() {
 
 let resetInfoPane = function(options) {
 
-  console.log( ccode3, ccode2, cname );
+  //console.log( ccode3, ccode2, cname );
 
   let flag = '';
 
@@ -940,6 +1006,7 @@ let resetInfoPane = function(options) {
 
     let web_images = '<a id="web_images" target="myframe" title="photos" href="https://www.bing.com/images/search?&q=%22' + options.name + '%22' + specifier.toLowerCase() + '&qft=+filterui:photo-photo&FORM=IRFLTR"> <i class="far fa-images"></i>&nbsp; </a>';
     let videos = '<a target="myframe" title="videos" href="https://toogl.es/#/search/' + encodeURI(options.name + specifier.toLowerCase()) + '"> <i class="fas fa-video"></i>&nbsp; </a>';
+    let archiveorg = '<a target="myframe" title="archive.org" href="https://archive.org/search.php?query=' + encodeURI(options.name + specifier.toLowerCase()) + '"> <i class="fas fa-archive"></i>&nbsp; </a>';
     let searx = '<a target="_blank" title="search" href="' + searx_host + '/?q=' + options.name + specifier.toLowerCase() + '"> <i class="fab fa-searchengin"></i>&nbsp; </a>';
 
     //let web_earth = '<a target="_blank" href="https://earth.google.com/web/@' + options.lat + ',' + options.lon + ',146.726a,'+ view_distance / 2 +'d,50y,0h,25t,0r"> <i class="fas fa-globe"></i>&nbsp;</a>';
@@ -958,6 +1025,7 @@ let resetInfoPane = function(options) {
 
       '<li>' + web_images + '</li>' +
       '<li>' + videos + '</li>' +
+      '<li>' + archiveorg + '</li>' +
       '<li>' + searx + '</li>' +
 
       //'<li>'+ web_earth +'</li>'+
@@ -992,6 +1060,7 @@ let resetInfoPane = function(options) {
 
     //let state_temp = state.replace(/\s+/g, '-').toLowerCase();
     //let newspaper = '<a target="myframe" title="newspapers" href="https://www.w3newspapers.com/' + state_temp + '/"> <i class="far fa-newspaper"></i>&nbsp;</a>';
+    let archiveorg = '<a target="myframe" title="archive.org" href="https://archive.org/search.php?query=' + encodeURI(state + ', ' + cname) + '"> <i class="fas fa-archive"></i>&nbsp; </a>';
     let videos = '<a target="myframe" title="videos" href="https://toogl.es/#/search/' + encodeURI(state + ', ' + cname) + '"> <i class="fas fa-video"></i>&nbsp; </a>';
     let web_earth = '<a target="_blank" href="https://earth.google.com/web/@' + options.lat + ',' + options.lon + ',146.726a,' + view_distance / 2 + 'd,50y,0h,25t,0r"> <i class="fas fa-globe"></i>&nbsp;</a>';
 
@@ -1007,14 +1076,14 @@ let resetInfoPane = function(options) {
 
       '<li><a href="#" title="wikipedia menu"><i class="fab fa-wikipedia-w"></i> </a> <ul> <li>' + wikipedia + '</li> <li>' + wikipedia_main + '</li> <li>' + wikipedia_portal + ' </li> <li>' + wikipedia_outline + ' </li> <li>' + wikipedia_demographics + ' </li> <li>' + wikipedia_history + '</li> <li>' + wikipedia_culture + '</li> <li>' + wikipedia_art + '</li> <li>' + wikipedia_search + '</li></ul>' +
 
-      '<li><a href="#" title="wikischool menu"><i class="fas fa-university"></i></a> <ul> <li>' + wikischool + '</li> <li>' + wikischool_main + ' </li> </ul> ' +
-
       '<li>' + web_images + '</li>' +
       '<li>' + videos + '</li>' +
       '<li>' + radio + '</li>' +
       //'<li>' + newspaper + '</li>' +
+      '<li>' + archiveorg + '</li>' +
       '<li>' + web_earth + '</li>' +
       '<li>' + searx + '</li>' +
+      '<li><a href="#" title="wikischool menu"><i class="fas fa-university"></i></a> <ul> <li>' + wikischool + '</li> <li>' + wikischool_main + ' </li> </ul> ' +
 
       '</nav>' +
 
@@ -1043,6 +1112,7 @@ let resetInfoPane = function(options) {
     let videos = '<a target="myframe" title="videos" href="https://toogl.es/#/search/' + encodeURI(cname) + '"> <i class="fas fa-video"></i>&nbsp; </a>';
     let searx = '<a target="_blank" title="search" href="' + searx_host + '/?q=' + cname + '"> <i class="fab fa-searchengin"></i>&nbsp; </a>';
     let radio = '<a target="myframe" title="radio stations" href="https://tunein.com/search/?query=' + cname.toLowerCase() + '"> <i class="fas fa-volume-up"></i>&nbsp; </a>';
+    let archiveorg = '<a target="myframe" title="archive.org" href="https://archive.org/search.php?query=' + cname.toLowerCase() + '"> <i class="fas fa-archive"></i>&nbsp; </a>';
 
     let cname_temp = cname.replace(/\s+/g, '-').toLowerCase();
 
@@ -1066,15 +1136,15 @@ let resetInfoPane = function(options) {
 
       '<li><a href="#" title="wikipedia menu"><i class="fab fa-wikipedia-w"></i> </a> <ul> <li>' + wikipedia + '</li> <li>' + wikipedia_main + '</li> <li>' + wikipedia_portal + ' </li> <li>' + wikipedia_outline + ' </li> <li>' + wikipedia_demographics + ' </li> <li>' + wikipedia_history + '</li> <li>' + wikipedia_culture + '</li> <li>' + wikipedia_art + '</li> <li>' + wikipedia_search + '</li></ul>' +
 
-      '<li><a href="#" title="wikischool menu"><i class="fas fa-university"></i></a> <ul> <li>' + wikischool + '</li> <li>' + wikischool_main + ' </li> </ul> ' +
-
       '<li>' + web_images + '</li>' +
       '<li>' + videos + '</li>' +
       '<li>' + radio + '</li>' +
 
       '<li><a href="#" title="newspapers menu"><i class="far fa-newspaper"></i> </a> <ul class="nps">' + nps + '</li></ul>' +
+      '<li>' + archiveorg + '</li>' +
       '<li>' + web_earth + '</li>' +
       '<li>' + searx + '</li>' +
+      '<li><a href="#" title="wikischool menu"><i class="fas fa-university"></i></a> <ul> <li>' + wikischool + '</li> <li>' + wikischool_main + ' </li> </ul> ' +
 
       '</nav>' +
 
@@ -1087,8 +1157,18 @@ let resetInfoPane = function(options) {
 
     let state_name = '';
 
-    if (state !== '') {
+    let web_images = '';
+
+    if (state !== '') { // state city
+
       state_name = ', ' + state;
+      web_images = '<a target="myframe" title="photos" href="https://www.bing.com/images/search?&q=%22' + options.city_latin + '%22' + state_name + '&qft=+filterui:photo-photo&FORM=IRFLTR"> <i class="far fa-images"></i> &nbsp;</a>';
+
+    }
+    else { // country city
+
+      web_images = '<a target="myframe" title="photos" href="https://www.bing.com/images/search?&q=%22' + options.city_latin + '%22' + state_name + ', ' + cname + '&qft=+filterui:photo-photo&FORM=IRFLTR"> <i class="far fa-images"></i> &nbsp;</a>';
+
     }
 
     let headline = '<h1>' + city + state_name + ', ' + cname + type + '</h1><br/>';
@@ -1109,8 +1189,8 @@ let resetInfoPane = function(options) {
     let wikischool_news = '<a target="myframe" href="https://wikischool.org/search/%22' + options.city_latin + '%22,%20' + state_name + cname + '#news"> <i class="fas fa-university"></i> news</a>';
     let wikischool_youtube = '<a target="myframe" href="https://wikischool.org/search/%22' + options.city_latin + '%22,%20' + state_name + cname + '#youtube"> <i class="fas fa-university"></i> youtube</a>';
 
-    let web_images = '<a target="myframe" title="photos" href="https://www.bing.com/images/search?&q=%22' + options.city_latin + '%22' + state_name + ', ' + cname + '&qft=+filterui:photo-photo&FORM=IRFLTR"> <i class="far fa-images"></i> &nbsp;</a>';
-    let videos = '<a target="myframe" title="videos" href="https://toogl.es/#/search/' + encodeURI(options.city_latin + state_name + ', ' + cname) + '"> <i class="fas fa-video"></i>&nbsp; </a>';
+    let videos = '<a target="myframe" title="videos" href="https://toogl.es/#/search/' + encodeURI( options.city_latin + state_name + ', ' + cname) + '"> <i class="fas fa-video"></i>&nbsp; </a>';
+    let archiveorg = '<a target="myframe" title="archive.org" href="https://archive.org/search.php?query=' + encodeURI( options.city_latin + state_name + ', ' + cname) + '"> <i class="fas fa-archive"></i>&nbsp; </a>';
     let searx = '<a target="_blank" title="search" href="' + searx_host + '/?q=%22' + encodeURI(options.city_latin + state_name + '", ' + cname) + '"> <i class="fab fa-searchengin"></i>&nbsp; </a>';
     let radio = '<a target="myframe" title="radio stations" href="https://tunein.com/search/?query=' + options.city_latin + '"> <i class="fas fa-volume-up"></i>&nbsp; </a>';
 
@@ -1139,15 +1219,15 @@ let resetInfoPane = function(options) {
       '<li><a href="#" title="wikipedia menu"><i class="fab fa-wikipedia-w"></i> </a> <ul> <li>' + wikipedia + '</li> <li>' + wikipedia_main + '</li> <li>' + wikipedia_search + ' </li>  </li></ul>' +
       // FIXME: add wikipedia_history for capitals  (and other populated cities)
 
-      '<li><a href="#" title="wikischool menu"><i class="fas fa-university"></i></a> <ul>  <li>' + wikischool_main + ' </li> </ul> ' +
-
       '<li>' + web_images + '</li>' +
       '<li>' + videos + '</li>' +
       '<li>' + radio + '</li>' +
 
       '<li><a href="#" title="newspapers menu"><i class="far fa-newspaper"></i> </a> <ul class="nps">' + nps + '</li></ul>' +
+      '<li>' + archiveorg + '</li>' +
       '<li>' + web_earth + '</li>' +
       '<li>' + searx + '</li>' +
+      '<li><a href="#" title="wikischool menu"><i class="fas fa-university"></i></a> <ul>  <li>' + wikischool_main + ' </li> </ul> ' +
 
       '</nav>' +
 
@@ -1192,6 +1272,7 @@ let checkHashParams = function() {
   // URL hash input handling
   geohash = getHashParams();
   //console.log('user query: ', geohash);
+
   $('#progressbar').hide();
 
   if (geohash.lat !== '') {
@@ -1204,17 +1285,22 @@ let checkHashParams = function() {
 
       //console.log( geohash.country, ' ', countries.features[i].properties.admin );
 
-      if (countries[i].admin != undefined && countries[i].admin == geohash.country) { // or .sovereignt
-        //console.log( countries.features[i] );
+      if (countries[i].brk_name != undefined && countries[i].brk_name == geohash.country) { // or .sovereignt
+
+        //console.log( countries[i] );
         ccode2 = countries[i].iso_a2;
         ccode3 = countries[i].adm0_a3_is;
         cname = countries[i].brk_name;
         //cname = geohash.country;
-        //country_extent = countries.features[i].properties.geometry.getExtent();
-      }
-    }
+        //country_extent = new og.Extent(new og.LonLat(180, 90), new og.LonLat(-180, -90));
 
-    //console.log( cname, ccode2, ccode3);
+        // FIXME
+        //country_extent = og.Extent.createByCoordinates( countries[i].geometry_coordinates);
+        //console.log( country_extent );
+
+      }
+
+    }
 
     if (ccode2 !== undefined && (cities_loaded || geohash.lat !== '')) {
 
@@ -1233,6 +1319,7 @@ let checkHashParams = function() {
         })
 
     } else {
+      //console.log( cname, ccode2, ccode3);
       //console.log('no country data');
       return 1;
     }
@@ -1358,7 +1445,7 @@ let addLayerRivers = function() {
           'extra': true,
           'type': 'river',
           'name': latinize(e.pickingObject.properties.name),
-          'extent': e.pickingObject.geometry.getExtent()
+          'extent': e.pickingObject.geometry.g//etExtent()
         });
       });
 
@@ -1377,7 +1464,7 @@ let addLayerSeas = function() {
     }).then(data => {
 
       let seas = new og.layer.Vector("Seas", {
-        'visibility': true,
+        'visibility': false,
         'isBaseLayer': false,
         'diffuse': [0, 0, 0],
         'ambient': [1, 1, 1],
