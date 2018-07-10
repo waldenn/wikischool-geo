@@ -11,7 +11,7 @@ let $; // jQuery
 let db; // indexedDB
 let autoCompleteEnabled = false;
 
-let osm = new og.layer.XYZ("OpenStreetMap", {
+let osm = new og.layer.XYZ("roadmap", {
   isBaseLayer: true,
   url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
   visibility: false,
