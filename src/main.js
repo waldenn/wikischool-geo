@@ -1446,7 +1446,7 @@ let addLayerRivers = function() {
           'extra': true,
           'type': 'river',
           'name': latinize(e.pickingObject.properties.name),
-          'extent': e.pickingObject.geometry.g//etExtent()
+          'extent': e.pickingObject.geometry.getExtent()
         });
       });
 
