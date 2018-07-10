@@ -1,8 +1,12 @@
-
 /*
  *  Copyright 2018, Jama Poulsen
  *
  *  See: LICENSE.md
+ *
+ *  Project by Wikischool (https://wikischool.org)
+ *
+ *  Code: https://github.com/waldenn/wikischool-geo
+ *
  */
 
 // globals
