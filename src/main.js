@@ -64,7 +64,7 @@ placeMarkers.events.on("lclick", function(e) {
 
   city = latinize( e.pickingObject.properties.name );
 
-  resetInfoPane({
+  setInfo({
     'type': 'city',
     'city_latin': city,
     'lat': e.pickingObject._lonlat.lat,
@@ -79,7 +79,7 @@ placeLabels.events.on("lclick", function(e) {
 
   city = latinize( e.pickingObject.properties.name );
 
-  resetInfoPane({
+  setInfo({
     'type': 'city',
     'city_latin': city,
     'lat': e.pickingObject._lonlat.lat,
@@ -624,11 +624,11 @@ const initGeoData = function() {
           news = news.sortBy('name');;
 
           if (state === '') { // get country cities
-            resetInfoPane({
+            setInfo({
               'type': 'country'
             });
           } else {
-            resetInfoPane({
+            setInfo({
               'type': 'state'
             });
           }
@@ -656,7 +656,7 @@ const initGeoData = function() {
               //console.log( e.pickingObject , cname );
               city = e.pickingObject.label._text;
 
-              resetInfoPane( { 'type': 'city', 'city_latin': latinize( city ), 'lat': e.pickingObject._lonlat.lat, 'lon' : e.pickingObject._lonlat.lon } );
+              setInfo( { 'type': 'city', 'city_latin': latinize( city ), 'lat': e.pickingObject._lonlat.lat, 'lon' : e.pickingObject._lonlat.lon } );
 
                let pos_ = new og.LonLat( e.pickingObject._lonlat.lon, e.pickingObject._lonlat.lat, view_distance );
               globe.planet.flyLonLat( pos_ );
@@ -852,7 +852,7 @@ const initAutocomplete = function() {
 
         news = news.sortBy('name');;
 
-        resetInfoPane( { 'type': 'city', 'city_latin': latinize( city ), 'lat': loc.latitude, 'lon' : loc.longitude } );
+        setInfo( { 'type': 'city', 'city_latin': latinize( city ), 'lat': loc.latitude, 'lon' : loc.longitude } );
         let pos_ = new og.LonLat( loc.longitude, loc.latitude, view_distance );
         globe.planet.flyLonLat( pos_ );
 
@@ -912,7 +912,7 @@ const initButtonEvents = function() {
       //console.log('back to country');
       globe.planet.flyExtent(country_extent);
       city = '';
-      resetInfoPane({
+      setInfo({
         'type': 'country'
       });
     } else if (state !== '') {
@@ -980,7 +980,7 @@ function toggleFullScreen() {
 }
 
 
-const resetInfoPane = function(options) {
+const setInfo = function(options) {
 
   //console.log( ccode3, ccode2, cname );
 
@@ -994,8 +994,11 @@ const resetInfoPane = function(options) {
 
     let specifier = '';
 
+    let tribes = '';
+
     if (options.type == 'river') {
       specifier = ' River';
+      tribes = '<li><a target="_blank" title="books" href="https://www.culturalsurvival.org/search/node?keys='+ options.name + specifier.toLowerCase() + '"> <i class="fas fa-child"></i>&nbsp; </a></li>';
     }
 
     globe.planet.flyExtent(options.extent);
@@ -1012,6 +1015,7 @@ const resetInfoPane = function(options) {
     let videos = '<a target="myframe" title="videos" href="https://toogl.es/#/search/' + encodeURI(options.name + specifier.toLowerCase()) + '"> <i class="fas fa-video"></i>&nbsp; </a>';
     let archiveorg = '<a target="myframe" title="archive.org" href="https://archive.org/search.php?query=' + encodeURI(options.name + specifier.toLowerCase()) + '"> <i class="fas fa-archive"></i>&nbsp; </a>';
     let searx = '<a target="_blank" title="search" href="' + searx_host + '/?q=' + options.name + specifier.toLowerCase() + '"> <i class="fab fa-searchengin"></i>&nbsp; </a>';
+    let books = '<a target="myframe" title="books" href="https://wikischool.org/search/'+ options.name + specifier.toLowerCase() + '#g.books"> <i class="fas fa-book"></i>&nbsp; </a>';
 
     //let web_earth = '<a target="_blank" href="https://earth.google.com/web/@' + options.lat + ',' + options.lon + ',146.726a,'+ view_distance / 2 +'d,50y,0h,25t,0r"> <i class="fas fa-globe"></i>&nbsp;</a>';
 
@@ -1029,8 +1033,10 @@ const resetInfoPane = function(options) {
 
       '<li>' + web_images + '</li>' +
       '<li>' + videos + '</li>' +
+      '<li>' + books + '</li>' +
       '<li>' + archiveorg + '</li>' +
       '<li>' + searx + '</li>' +
+      tribes + 
 
       //'<li>'+ web_earth +'</li>'+
 
@@ -1068,6 +1074,10 @@ const resetInfoPane = function(options) {
     let videos = '<a target="myframe" title="videos" href="https://toogl.es/#/search/' + encodeURI(state + ', ' + cname) + '"> <i class="fas fa-video"></i>&nbsp; </a>';
     let web_earth = '<a target="_blank" href="https://earth.google.com/web/@' + options.lat + ',' + options.lon + ',146.726a,' + view_distance / 2 + 'd,50y,0h,25t,0r"> <i class="fas fa-globe"></i>&nbsp;</a>';
     let travel = '<a target="myframe" title="travel" href="https://www.tripadvisor.com/Search?q=' + state + ', ' + cname + '"> <i class="fas fa-suitcase"></i>&nbsp; </a>';
+    let art = '<a target="_blank" title="art" href="https://artsandculture.google.com/search?q=' + state + ', ' + cname + '"> <i class="fas fa-palette"></i>&nbsp; </a>';
+    let books = '<a target="myframe" title="books" href="https://wikischool.org/search/'+ state + ', ' + cname + '#g.books"> <i class="fas fa-book"></i>&nbsp; </a>';
+    //let architecture = '<a target="myframe" title="architecture" href="https://worldarchitecture.org/search/?q='+  state + ', ' + cname + '"> <i class="fab fa-fort-awesome"></i>&nbsp; </a>';
+    let tribes = '<a target="_blank" title="books" href="https://www.culturalsurvival.org/search/node?keys='+ state + '"> <i class="fas fa-child"></i>&nbsp; </a>';
 
     let header;
 
@@ -1085,11 +1095,15 @@ const resetInfoPane = function(options) {
       '<li>' + videos + '</li>' +
       '<li>' + radio + '</li>' +
       //'<li>' + newspaper + '</li>' +
+      '<li>' + books + '</li>' +
       '<li>' + archiveorg + '</li>' +
       '<li>' + web_earth + '</li>' +
       '<li>' + searx + '</li>' +
       '<li>' + travel + '</li>' +
-      '<li><a href="#" title="wikischool menu"><i class="fas fa-university"></i></a> <ul> <li>' + wikischool + '</li> <li>' + wikischool_main + ' </li> </ul> ' +
+      '<li>' + art + '</li>' +
+      //'<li>' + architecture + '</li>' +
+      '<li>' + tribes + '</li>' +
+      //'<li><a href="#" title="wikischool menu"><i class="fas fa-university"></i></a> <ul> <li>' + wikischool + '</li> <li>' + wikischool_main + ' </li> </ul> ' +
 
       '</nav>' +
 
@@ -1120,6 +1134,10 @@ const resetInfoPane = function(options) {
     let radio = '<a target="myframe" title="radio stations" href="https://tunein.com/search/?query=' + cname.toLowerCase() + '"> <i class="fas fa-volume-up"></i>&nbsp; </a>';
     let archiveorg = '<a target="myframe" title="archive.org" href="https://archive.org/search.php?query=' + cname.toLowerCase() + '"> <i class="fas fa-archive"></i>&nbsp; </a>';
     let travel = '<a target="myframe" title="travel" href="https://www.tripadvisor.com/Search?q=' + cname.toLowerCase() + '"> <i class="fas fa-suitcase"></i>&nbsp; </a>';
+    let art = '<a target="_blank" title="art" href="https://artsandculture.google.com/search?q=' + cname.toLowerCase() + '"> <i class="fas fa-palette"></i>&nbsp; </a>';
+    let books = '<a target="myframe" title="books" href="https://wikischool.org/search/'+ cname.toLowerCase() + '#g.books"> <i class="fas fa-book"></i>&nbsp; </a>';
+    //let architecture = '<a target="myframe" title="architecture" href="https://worldarchitecture.org/search/?q='+ cname.toLowerCase() + '"> <i class="fab fa-fort-awesome"></i>&nbsp; </a>';
+    let tribes = '<a target="_blank" title="books" href="https://www.culturalsurvival.org/search/node?keys='+ cname + '"> <i class="fas fa-child"></i>&nbsp; </a>';
 
     let cname_temp = cname.replace(/\s+/g, '-').toLowerCase();
 
@@ -1148,11 +1166,15 @@ const resetInfoPane = function(options) {
       '<li>' + radio + '</li>' +
 
       '<li><a href="#" title="newspapers menu"><i class="far fa-newspaper"></i> </a> <ul class="nps">' + nps + '</li></ul>' +
+      '<li>' + books + '</li>' +
       '<li>' + archiveorg + '</li>' +
       '<li>' + web_earth + '</li>' +
       '<li>' + searx + '</li>' +
       '<li>' + travel + '</li>' +
-      '<li><a href="#" title="wikischool menu"><i class="fas fa-university"></i></a> <ul> <li>' + wikischool + '</li> <li>' + wikischool_main + ' </li> </ul> ' +
+      '<li>' + art + '</li>' +
+      //'<li>' + architecture + '</li>' +
+      '<li>' + tribes + '</li>' +
+      //'<li><a href="#" title="wikischool menu"><i class="fas fa-university"></i></a> <ul> <li>' + wikischool + '</li> <li>' + wikischool_main + ' </li> </ul> ' +
 
       '</nav>' +
 
@@ -1203,6 +1225,9 @@ const resetInfoPane = function(options) {
     let radio = '<a target="myframe" title="radio stations" href="https://tunein.com/search/?query=' + options.city_latin + '"> <i class="fas fa-volume-up"></i>&nbsp; </a>';
 
     let travel = '<a target="myframe" title="travel" href="https://www.tripadvisor.com/Search?q=%22' + options.city_latin + '%22,%20' + state_name + cname + '"> <i class="fas fa-suitcase"></i>&nbsp; </a>';
+    let art = '<a target="_blank" title="art" href="https://artsandculture.google.com/search?q=' + options.city_latin + '%22,%20' + state_name + cname + '"> <i class="fas fa-palette"></i>&nbsp; </a>';
+    let books = '<a target="myframe" title="books" href="https://wikischool.org/search/%22' + options.city_latin + ',%20' + state_name + cname + '%22#g.books"> <i class="fas fa-book"></i>&nbsp; </a>';
+    //let architecture = '<a target="myframe" title="architecture" href="https://worldarchitecture.org/search/?q='+ options.city_latin + '"> <i class="fab fa-fort-awesome"></i>&nbsp; </a>';
 
     let cname_temp = cname.replace(/\s+/g, '-').toLowerCase();
 
@@ -1234,11 +1259,14 @@ const resetInfoPane = function(options) {
       '<li>' + radio + '</li>' +
 
       '<li><a href="#" title="newspapers menu"><i class="far fa-newspaper"></i> </a> <ul class="nps">' + nps + '</li></ul>' +
+      '<li>' + books + '</li>' +
       '<li>' + archiveorg + '</li>' +
       '<li>' + web_earth + '</li>' +
       '<li>' + searx + '</li>' +
       '<li>' + travel + '</li>' +
-      '<li><a href="#" title="wikischool menu"><i class="fas fa-university"></i></a> <ul>  <li>' + wikischool_main + ' </li> </ul> ' +
+      '<li>' + art + '</li>' +
+      //'<li>' + architecture + '</li>' +
+      //'<li><a href="#" title="wikischool menu"><i class="fas fa-university"></i></a> <ul>  <li>' + wikischool_main + ' </li> </ul> ' +
 
       '</nav>' +
 
@@ -1322,7 +1350,7 @@ const checkHashParams = function() {
 
           news = news.sortBy('name');;
 
-          resetInfoPane( { 'type': 'city', 'city_latin': latinize( geohash.name ), 'lat': geohash.lat, 'lon' : geohash.lon } );
+          setInfo( { 'type': 'city', 'city_latin': latinize( geohash.name ), 'lat': geohash.lat, 'lon' : geohash.lon } );
           let pos_ = new og.LonLat( geohash.lon, geohash.lat, view_distance );
           globe.planet.flyLonLat( pos_ );
 
@@ -1451,7 +1479,7 @@ const addLayerRivers = function() {
       });
 
       rivers.events.on("lclick", function(e) {
-        resetInfoPane({
+        setInfo({
           'extra': true,
           'type': 'river',
           'name': latinize(e.pickingObject.properties.name),
@@ -1517,7 +1545,7 @@ const addLayerSeas = function() {
 
       seas.events.on("lclick", function(e) {
         console.log(e.pickingObject.properties.name);
-        resetInfoPane({
+        setInfo({
           'extra': true,
           'type': 'sea',
           'name': latinize(e.pickingObject.properties.name),
