@@ -15,21 +15,21 @@ let $; // jQuery
 let db; // indexedDB
 let autoCompleteEnabled = false;
 
-let osm = new og.layer.XYZ("roadmap", {
+const osm = new og.layer.XYZ("roadmap", {
   isBaseLayer: true,
   url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
   visibility: true,
   attribution: '<a href="https://www.openstreetmap.org/copyright">&copy; OpenStreetMap</a>'
 });
 
-let sat = new og.layer.XYZ("Satellite", {
+const sat = new og.layer.XYZ("Satellite", {
   isBaseLayer: true,
   url: "https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v10/tiles/256/{z}/{x}/{y}?access_token=pk.eyJ1IjoibWdldmxpY2giLCJhIjoiY2o0ZmVudncwMGZvbjJ3bGE0OGpsejBlZyJ9.RSRJLS0J_U9_lw1Ti1CmsQ",
   visibility: false,
   attribution: '<a href="https://www.mapbox.com">&copy; MapBox</a>'
 });
 
-let placeMarkers = new og.layer.Vector("place markers", {
+const placeMarkers = new og.layer.Vector("place markers", {
   'nodeCapacity': 100000,
   //'maxZoom': 9,
   'minZoom': 3,
@@ -37,7 +37,7 @@ let placeMarkers = new og.layer.Vector("place markers", {
   'fading': true
 });
 
-let placeLabels = new og.layer.Vector("place labels", {
+const placeLabels = new og.layer.Vector("place labels", {
   'nodeCapacity': 2000,
   'scaleByDistance': [0, 600000, 5000000],
   'minZoom': 9,
@@ -62,33 +62,34 @@ placeMarkers.events.on("mouseleave", function(e) {
 
 placeMarkers.events.on("lclick", function(e) {
 
-  city = e.pickingObject.properties.name;
+  city = latinize( e.pickingObject.properties.name );
+
   resetInfoPane({
     'type': 'city',
-    'city_latin': latinize(city),
+    'city_latin': city,
     'lat': e.pickingObject._lonlat.lat,
     'lon': e.pickingObject._lonlat.lon
   });
 
-  let pos_ = new og.LonLat(e.pickingObject._lonlat.lon, e.pickingObject._lonlat.lat, view_distance);
-  globe.planet.flyLonLat(pos_);
+  globe.planet.flyLonLat( new og.LonLat(e.pickingObject._lonlat.lon, e.pickingObject._lonlat.lat, view_distance) );
 
 });
 
 placeLabels.events.on("lclick", function(e) {
 
-  city = e.pickingObject.properties.name;
+  city = latinize( e.pickingObject.properties.name );
+
   resetInfoPane({
     'type': 'city',
-    'city_latin': latinize(city),
+    'city_latin': city,
     'lat': e.pickingObject._lonlat.lat,
     'lon': e.pickingObject._lonlat.lon
   });
-  let pos_ = new og.LonLat(e.pickingObject._lonlat.lon, e.pickingObject._lonlat.lat, view_distance);
-  globe.planet.flyLonLat(pos_);
+
+  globe.planet.flyLonLat( new og.LonLat(e.pickingObject._lonlat.lon, e.pickingObject._lonlat.lat, view_distance) );
 });
 
-let globe = new og.Globe({
+const globe = new og.Globe({
   "target": "globe",
   "name": "Earth",
   //"terrain": new og.terrain.GlobusTerrain(),
@@ -101,27 +102,12 @@ let globe = new og.Globe({
 });
 
 //globe.planet.setHeightFactor(1);
-globe.planet.addControl(new og.control.LayerSwitcher());
+globe.planet.addControl( new og.control.LayerSwitcher() );
 globe.planet.lightEnabled = false;
 globe.planet.RATIO_LOD = 0.75;
-
-//create font
 globe.planet.fontAtlas.createFont("Lucida Console", "normal", "bold");
 
-let ccode2;
-let ccode3;
-
-let cname;
-let country_extent
-
-let city;
-let city_lat;
-let city_lon;
-
-let state = '';
-let state_code = '';
-
-let us_state_codes = {
+const us_state_codes = {
   "Alabama": "AL",
   "Alaska": "AK",
   "American Samoa": "AS",
@@ -183,21 +169,27 @@ let us_state_codes = {
   "Wyoming": "WY"
 };
 
-let view_distance = 10000;
-
 let countries;
 let cities;
-let cities_loaded = false;
 let urbanizations;
 
-let newspapers = []; // FIXME
+let ccode2;
+let ccode3;
+let cname;
+let country_extent
+let city;
+let city_lat;
+let city_lon;
+let state = '';
+let state_code = '';
+let cities_loaded = false;
+
 let news = [];
-
 let geohash;
-
 let maximized_map = false;
 
-let searx_host = 'https://searx.xyz';
+const view_distance = 10000;
+const searx_host = 'https://searx.xyz';
 
 Array.prototype.sortBy = function(p) {
   return this.slice(0).sort(function(a, b) {
@@ -206,7 +198,7 @@ Array.prototype.sortBy = function(p) {
 }
 
 
-let init = function() {
+const init = function() {
 
   $ = jQuery;
 
@@ -216,7 +208,7 @@ let init = function() {
 
 };
 
-let initDB = function() {
+const initDB = function() {
 
   Dexie.exists("wikischool-geo").then(function(exists) {
 
@@ -225,7 +217,7 @@ let initDB = function() {
 
     db.version(1).stores({
       countries: "++, scalerank, admin, adm0_a3, name, brk_name, brk_group, pop_est, lastcensus, iso_a2, iso_a3",
-      cities: "id, name, iso2, cc2, admin1, pop",
+      cities: "id, name, iso2, cc2, fcode, pop",
       urbanizations: "++",
       news: "++, country, state, city",
     });
@@ -378,7 +370,7 @@ let initDB = function() {
 
 };
 
-let main = function() {
+const main = function() {
 
   initGeoData();
   initAutocomplete();
@@ -388,7 +380,7 @@ let main = function() {
 
 };
 
-let initGeoData = function() {
+const initGeoData = function() {
 
   let countries_ = new og.layer.Vector("Countries", {
     'visibility': true,
@@ -429,6 +421,8 @@ let initGeoData = function() {
   });
 
   countries_.events.on("lclick", function(e) {
+
+    globe.planet.entityCollections = []; // reset
 
     let obj = countries[e.pickingObject.id];
 
@@ -524,6 +518,7 @@ let initGeoData = function() {
               }
             }));
 
+            /*
             labels.push(new og.Entity({
               'lonlat': [parseFloat(ri.lon), parseFloat(ri.lat)],
               'label': {
@@ -540,6 +535,7 @@ let initGeoData = function() {
                 'name': ri.name
               }
             }));
+            */
 
           }
           else if ( ri.fcode === 'PPL' ){ // populated place
@@ -557,6 +553,7 @@ let initGeoData = function() {
               }
             }));
 
+            /*
             labels.push(new og.Entity({
               'lonlat': [parseFloat(ri.lon), parseFloat(ri.lat)],
               'label': {
@@ -573,6 +570,7 @@ let initGeoData = function() {
                 'name': ri.name
               }
             }));
+            */
 
 
           }
@@ -591,6 +589,7 @@ let initGeoData = function() {
               }
             }));
 
+            /*
             labels.push(new og.Entity({
               'lonlat': [parseFloat(ri.lon), parseFloat(ri.lat)],
               'label': {
@@ -607,12 +606,13 @@ let initGeoData = function() {
                 'name': ri.name
               }
             }));
+            */
 
           }
 
         }
 
-        placeLabels.setEntities(labels);
+        //placeLabels.setEntities(labels);
         placeMarkers.setEntities(markers);
 
         // fetch newspapers of this country
@@ -736,13 +736,15 @@ let initGeoData = function() {
   });
 
   countries_.events.on("touchstart", function(e) {
+    // FIXME call same code by function as for "lclick"
+    globe.planet.entityCollections = []; // reset
     globe.planet.flyExtent(e.pickingObject.geometry.getExtent());
   });
 
 };
 
 
-let initAutocomplete = function() {
+const initAutocomplete = function() {
 
   if ( autoCompleteEnabled ){
 
@@ -891,7 +893,7 @@ let initAutocomplete = function() {
 
 };
 
-let initButtonEvents = function() {
+const initButtonEvents = function() {
 
   $('div.ogLayerSwitcherButton').append('<i class="fas fa-cog" style="color:black;";>');
 
@@ -978,7 +980,7 @@ function toggleFullScreen() {
 }
 
 
-let resetInfoPane = function(options) {
+const resetInfoPane = function(options) {
 
   //console.log( ccode3, ccode2, cname );
 
@@ -1065,6 +1067,7 @@ let resetInfoPane = function(options) {
     let archiveorg = '<a target="myframe" title="archive.org" href="https://archive.org/search.php?query=' + encodeURI(state + ', ' + cname) + '"> <i class="fas fa-archive"></i>&nbsp; </a>';
     let videos = '<a target="myframe" title="videos" href="https://toogl.es/#/search/' + encodeURI(state + ', ' + cname) + '"> <i class="fas fa-video"></i>&nbsp; </a>';
     let web_earth = '<a target="_blank" href="https://earth.google.com/web/@' + options.lat + ',' + options.lon + ',146.726a,' + view_distance / 2 + 'd,50y,0h,25t,0r"> <i class="fas fa-globe"></i>&nbsp;</a>';
+    let travel = '<a target="myframe" title="travel" href="https://www.tripadvisor.com/Search?q=' + state + ', ' + cname + '"> <i class="fas fa-suitcase"></i>&nbsp; </a>';
 
     let header;
 
@@ -1085,6 +1088,7 @@ let resetInfoPane = function(options) {
       '<li>' + archiveorg + '</li>' +
       '<li>' + web_earth + '</li>' +
       '<li>' + searx + '</li>' +
+      '<li>' + travel + '</li>' +
       '<li><a href="#" title="wikischool menu"><i class="fas fa-university"></i></a> <ul> <li>' + wikischool + '</li> <li>' + wikischool_main + ' </li> </ul> ' +
 
       '</nav>' +
@@ -1115,6 +1119,7 @@ let resetInfoPane = function(options) {
     let searx = '<a target="_blank" title="search" href="' + searx_host + '/?q=' + cname + '"> <i class="fab fa-searchengin"></i>&nbsp; </a>';
     let radio = '<a target="myframe" title="radio stations" href="https://tunein.com/search/?query=' + cname.toLowerCase() + '"> <i class="fas fa-volume-up"></i>&nbsp; </a>';
     let archiveorg = '<a target="myframe" title="archive.org" href="https://archive.org/search.php?query=' + cname.toLowerCase() + '"> <i class="fas fa-archive"></i>&nbsp; </a>';
+    let travel = '<a target="myframe" title="travel" href="https://www.tripadvisor.com/Search?q=' + cname.toLowerCase() + '"> <i class="fas fa-suitcase"></i>&nbsp; </a>';
 
     let cname_temp = cname.replace(/\s+/g, '-').toLowerCase();
 
@@ -1146,6 +1151,7 @@ let resetInfoPane = function(options) {
       '<li>' + archiveorg + '</li>' +
       '<li>' + web_earth + '</li>' +
       '<li>' + searx + '</li>' +
+      '<li>' + travel + '</li>' +
       '<li><a href="#" title="wikischool menu"><i class="fas fa-university"></i></a> <ul> <li>' + wikischool + '</li> <li>' + wikischool_main + ' </li> </ul> ' +
 
       '</nav>' +
@@ -1196,6 +1202,8 @@ let resetInfoPane = function(options) {
     let searx = '<a target="_blank" title="search" href="' + searx_host + '/?q=%22' + encodeURI(options.city_latin + state_name + '", ' + cname) + '"> <i class="fab fa-searchengin"></i>&nbsp; </a>';
     let radio = '<a target="myframe" title="radio stations" href="https://tunein.com/search/?query=' + options.city_latin + '"> <i class="fas fa-volume-up"></i>&nbsp; </a>';
 
+    let travel = '<a target="myframe" title="travel" href="https://www.tripadvisor.com/Search?q=%22' + options.city_latin + '%22,%20' + state_name + cname + '"> <i class="fas fa-suitcase"></i>&nbsp; </a>';
+
     let cname_temp = cname.replace(/\s+/g, '-').toLowerCase();
 
     let nps = '';
@@ -1229,6 +1237,7 @@ let resetInfoPane = function(options) {
       '<li>' + archiveorg + '</li>' +
       '<li>' + web_earth + '</li>' +
       '<li>' + searx + '</li>' +
+      '<li>' + travel + '</li>' +
       '<li><a href="#" title="wikischool menu"><i class="fas fa-university"></i></a> <ul>  <li>' + wikischool_main + ' </li> </ul> ' +
 
       '</nav>' +
@@ -1245,7 +1254,7 @@ let resetInfoPane = function(options) {
   $('a#wikipedia_main')[0].click();
 }
 
-let getHashParams = function() {
+const getHashParams = function() {
 
   let hashParams = {};
   let e,
@@ -1264,12 +1273,12 @@ let getHashParams = function() {
 };
 
 
-let newHash = function() {
+const newHash = function() {
   geohash = getHashParams();
   //console.log('...hash changed: user query: ', geohash);
 }
 
-let checkHashParams = function() {
+const checkHashParams = function() {
 
   // URL hash input handling
   geohash = getHashParams();
@@ -1370,13 +1379,13 @@ let checkHashParams = function() {
 
 }
 
-let addExtraLayers = function() {
+const addExtraLayers = function() {
   addLayerRivers();
   addLayerUrbanizations();
   addLayerSeas();
 };
 
-let addLayerRivers = function() {
+const addLayerRivers = function() {
 
   fetch("./data/json/rivers.json?v001")
     .then(r => {
@@ -1456,7 +1465,7 @@ let addLayerRivers = function() {
     });
 };
 
-let addLayerSeas = function() {
+const addLayerSeas = function() {
 
 
   fetch("./data/json/seas.json?v001") // TODO: store in DB?
@@ -1526,7 +1535,7 @@ let addLayerSeas = function() {
 
 
 
-let addLayerUrbanizations = function() {
+const addLayerUrbanizations = function() {
 
   //console.log( urbanizations );
 
