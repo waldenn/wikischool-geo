@@ -1216,17 +1216,17 @@ const setInfo = function(options) {
     let wikischool = '<a href="#"><i class="fas fa-university"></i> </a>';
     let wikischool_main = '<a target="myframe" href="https://wikischool.org/search/' + options.city_latin + state_name + ',%20' + cname + '"> <i class="fas fa-university"></i> main </a>';
     let wikischool_wikipedia = '<a target="myframe" href="https://wikischool.org/search/%22' + options.city_latin + state_name + '%22,%20' + cname + '#wikipedia"> <i class="fas fa-university"></i> wikipedia</a>';
-    let wikischool_news = '<a target="myframe" href="https://wikischool.org/search/%22' + options.city_latin + '%22,%20' + state_name + cname + '#news"> <i class="fas fa-university"></i> news</a>';
-    let wikischool_youtube = '<a target="myframe" href="https://wikischool.org/search/%22' + options.city_latin + '%22,%20' + state_name + cname + '#youtube"> <i class="fas fa-university"></i> youtube</a>';
+    let wikischool_news = '<a target="myframe" href="https://wikischool.org/search/%22' + options.city_latin + '%22,%20' + state_name + ', ' + cname + '#news"> <i class="fas fa-university"></i> news</a>';
+    let wikischool_youtube = '<a target="myframe" href="https://wikischool.org/search/%22' + options.city_latin + '%22,%20' + state_name + ', ' + cname + '#youtube"> <i class="fas fa-university"></i> youtube</a>';
 
     let videos = '<a target="myframe" title="videos" href="https://toogl.es/#/search/' + encodeURI( options.city_latin + state_name + ', ' + cname) + '"> <i class="fas fa-video"></i>&nbsp; </a>';
     let archiveorg = '<a target="myframe" title="archive.org" href="https://archive.org/search.php?query=' + encodeURI( options.city_latin + state_name + ', ' + cname) + '"> <i class="fas fa-archive"></i>&nbsp; </a>';
     let searx = '<a target="_blank" title="search" href="' + searx_host + '/?q=%22' + encodeURI(options.city_latin + state_name + '", ' + cname) + '"> <i class="fab fa-searchengin"></i>&nbsp; </a>';
     let radio = '<a target="myframe" title="radio stations" href="https://tunein.com/search/?query=' + options.city_latin + '"> <i class="fas fa-volume-up"></i>&nbsp; </a>';
 
-    let travel = '<a target="myframe" title="travel" href="https://www.tripadvisor.com/Search?q=%22' + options.city_latin + '%22,%20' + state_name + cname + '"> <i class="fas fa-suitcase"></i>&nbsp; </a>';
-    let art = '<a target="_blank" title="art" href="https://artsandculture.google.com/search?q=' + options.city_latin + '%22,%20' + state_name + cname + '"> <i class="fas fa-palette"></i>&nbsp; </a>';
-    let books = '<a target="myframe" title="books" href="https://wikischool.org/search/%22' + options.city_latin + ',%20' + state_name + cname + '%22#g.books"> <i class="fas fa-book"></i>&nbsp; </a>';
+    let travel = '<a target="myframe" title="travel" href="https://www.tripadvisor.com/Search?q=%22' + options.city_latin + state_name + '%22, ' + cname + '"> <i class="fas fa-suitcase"></i>&nbsp; </a>';
+    let art = '<a target="_blank" title="art" href="https://artsandculture.google.com/search?q=' + options.city_latin + state_name + ', ' + cname + '"> <i class="fas fa-palette"></i>&nbsp; </a>';
+    let books = '<a target="myframe" title="books" href="https://wikischool.org/search/%22' + options.city_latin + state_name + '%22, ' + cname + '#g.books"> <i class="fas fa-book"></i>&nbsp; </a>';
     //let architecture = '<a target="myframe" title="architecture" href="https://worldarchitecture.org/search/?q='+ options.city_latin + '"> <i class="fab fa-fort-awesome"></i>&nbsp; </a>';
 
     let cname_temp = cname.replace(/\s+/g, '-').toLowerCase();
