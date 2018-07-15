@@ -63,7 +63,7 @@ placeMarkers.events.on("lclick", function(e) {
 
   user.city = latinize( e.pickingObject.properties.name );
 
-  console.log(e.pickingObject.properties );
+  //console.log(e.pickingObject.properties );
 
   db.news.where('country').equals( e.pickingObject.properties.ccode2 ).toArray().then(function(matches) {
 
@@ -99,7 +99,7 @@ const globe = new og.Globe({
   "target": "globe",
   "name": "Earth",
   //"terrain": new og.terrain.GlobusTerrain(),
-  "layers": [osm, sat, placeMarkers],
+  "layers": [osm, sat, placeLabels, placeMarkers],
   "planet": {
     "lightEnabled": false
   },
