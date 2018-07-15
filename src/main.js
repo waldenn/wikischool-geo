@@ -85,14 +85,20 @@ placeLabels.events.on("lclick", function(e) {
 
   user.city = latinize( e.pickingObject.properties.name );
 
-  setInfo({
-    'type': 'city',
-    'city_latin': user.city,
-    'lat': e.pickingObject._lonlat.lat,
-    'lon': e.pickingObject._lonlat.lon
+  db.news.where('country').equals( e.pickingObject.properties.ccode2 ).toArray().then(function(matches) {
+
+    setInfo({
+      'type': 'city',
+      'city_latin': user.city,
+      'lat': e.pickingObject._lonlat.lat,
+      'lon': e.pickingObject._lonlat.lon,
+      'news': matches.sortBy('name'),
+    });
+
+    globe.planet.flyLonLat( new og.LonLat(e.pickingObject._lonlat.lon, e.pickingObject._lonlat.lat, user.view_distance) );
+
   });
 
-  globe.planet.flyLonLat( new og.LonLat(e.pickingObject._lonlat.lon, e.pickingObject._lonlat.lat, user.view_distance) );
 });
 
 const globe = new og.Globe({
@@ -406,7 +412,8 @@ const initGeoData = function() {
                 'offset': [25, 10]
               },
               'properties': {
-                'name': ri.name
+                'name': ri.name,
+                'ccode2': ri.iso2,
               }
             }));
 
@@ -440,7 +447,8 @@ const initGeoData = function() {
                 'offset': [13, 0]
               },
               'properties': {
-                'name': ri.name
+                'name': ri.name,
+                'ccode2': ri.iso2,
               }
             }));
 
@@ -475,7 +483,8 @@ const initGeoData = function() {
                 'offset': [13, 0]
               },
               'properties': {
-                'name': ri.name
+                'name': ri.name,
+                'ccode2': ri.iso2,
               }
             }));
 
