@@ -17,14 +17,14 @@ const $ = jQuery;
 const osm = new og.layer.XYZ("roadmap", {
   isBaseLayer: true,
   url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-  visibility: false,
+  visibility: true,
   attribution: '<a href="https://www.openstreetmap.org/copyright">&copy; OpenStreetMap</a>'
 });
 
 const sat = new og.layer.XYZ("Satellite", {
   isBaseLayer: true,
   url: "https://api.mapbox.com/styles/v1/mapbox/satellite-v9/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoiZm94bXVsZGVyODMiLCJhIjoiY2pqYmR3dG5oM2Z1bzNrczJqYm5pODhuNSJ9.Y4DRmEPhb-XSlCR9CAXACQ",
-  visibility: true,
+  visibility: false,
   attribution: '<a href="https://www.mapbox.com">&copy; MapBox</a>'
 });
 
@@ -63,7 +63,7 @@ placeMarkers.events.on("lclick", function(e) {
 
   user.city = latinize( e.pickingObject.properties.name );
 
-  //console.log(e.pickingObject.properties );
+  console.log(e.pickingObject.properties );
 
   db.news.where('country').equals( e.pickingObject.properties.ccode2 ).toArray().then(function(matches) {
 
@@ -105,7 +105,7 @@ const globe = new og.Globe({
   "target": "globe",
   "name": "Earth",
   //"terrain": new og.terrain.GlobusTerrain(),
-  "layers": [osm, sat, placeLabels, placeMarkers],
+  "layers": [osm, sat, placeMarkers],
   "planet": {
     "lightEnabled": false
   },
@@ -161,7 +161,7 @@ const initDB = function() {
       countries: "++",
       cities: "id, iso2",
       urbanizations: "++",
-      news: "++, country", // to add: state
+      news: "++, country, state",
     });
 
     // country fields: "scalerank, featurecla, labelrank, sovereignt, sov_a3, adm0_dif, level, type, admin, adm0_a3, geou_dif, geounit, gu_a3, su_dif, subunit, su_a3, brk_diff, name, name_long, brk_a3, brk_name, brk_group, abbrev, postal, formal_en, formal_fr, note_adm0, note_brk, name_sort, name_alt, mapcolor7, mapcolor8, mapcolor9, mapcolor13, pop_est, gdp_md_est, pop_year, lastcensus, gdp_year, economy, income_grp, wikipedia, fips_10, iso_a2, iso_a3, iso_n3, un_a3, wb_a2, wb_a3, woe_id, adm0_a3_is, adm0_a3_us, adm0_a3_un, adm0_a3_wb, continent, region_un, subregion, region_wb, name_len, long_len, abbrev_len, tiny, homepart, geometry_type, geometry_coordinates",
@@ -240,7 +240,7 @@ const initDB = function() {
                         $('#progressbar').css({ 'width': '70%' }).html('70% ...loading news sources');
 
                         // add news sources
-                        Papa.parse('./data/csv/news.csv?001', {
+                        Papa.parse('./data/csv/news.csv?004', {
 
                           download: true,
                           delimiter: ",",
@@ -388,7 +388,7 @@ const initGeoData = function() {
             markers.push(new og.Entity({
               'lonlat': [parseFloat(ri.lon), parseFloat(ri.lat)],
               'billboard': {
-                'src': './assets/img/capital_marker.png',
+                'src': './assets/img/capital.png',
                 'width': 75,
                 'height': 75,
                 'offset': [0, 6],
@@ -399,6 +399,7 @@ const initGeoData = function() {
               }
             }));
 
+            /*
             labels.push(new og.Entity({
               'lonlat': [parseFloat(ri.lon), parseFloat(ri.lat)],
               'label': {
@@ -416,6 +417,7 @@ const initGeoData = function() {
                 'ccode2': ri.iso2,
               }
             }));
+            */
 
           }
           else if ( ri.fcode === 'PPL' ){ // populated place
@@ -434,6 +436,7 @@ const initGeoData = function() {
               }
             }));
 
+            /*
             labels.push(new og.Entity({
               'lonlat': [parseFloat(ri.lon), parseFloat(ri.lat)],
               'label': {
@@ -451,6 +454,7 @@ const initGeoData = function() {
                 'ccode2': ri.iso2,
               }
             }));
+            */
 
 
           }
@@ -470,6 +474,7 @@ const initGeoData = function() {
               }
             }));
 
+            /*
             labels.push(new og.Entity({
               'lonlat': [parseFloat(ri.lon), parseFloat(ri.lat)],
               'label': {
@@ -487,15 +492,18 @@ const initGeoData = function() {
                 'ccode2': ri.iso2,
               }
             }));
+            */
 
           }
 
         }
 
-        placeLabels.setEntities(labels);
+        //placeLabels.setEntities(labels);
         placeMarkers.setEntities(markers);
 
         // fetch news of this country
+
+        /*
         db.news.where('country').equals(user.ccode2).toArray().then(function(matches) {
 
           if ( user.state === '') { // country city
@@ -514,6 +522,26 @@ const initGeoData = function() {
           }
 
         })
+        */
+
+        if ( user.state === '') { // country city
+
+          db.news.where('country').equals(user.ccode2).toArray().then(function(matches) {
+
+            setInfo({ 'type': 'country', 'news': matches.sortBy('name'), });
+
+          })
+
+        } else { // state city
+
+          user.city == '';
+
+          db.news.where('state').equals(user.state_code).toArray().then(function(matches) {
+
+            setInfo({ 'type': 'state', 'news': matches.sortBy('name'), });
+
+          })
+        }
 
       })
       .catch(function(e) {
@@ -720,7 +748,7 @@ const initAutocomplete = function() {
       // fetch news of this country
       db.news.where('country').equals(user.ccode2).toArray().then(function(matches) {
 
-        setInfo( { 'type': 'city', 'city_latin': latinize( city ), 'lat': loc.latitude, 'lon' : loc.longitude, 'news': matches.sortBy('name') } );
+        setInfo( { 'type': 'city', 'city_latin': latinize( user.city ), 'lat': loc.latitude, 'lon' : loc.longitude, 'news': matches.sortBy('name') } );
         let pos_ = new og.LonLat( loc.longitude, loc.latitude, user.view_distance );
         globe.planet.flyLonLat( pos_ );
 
@@ -886,8 +914,6 @@ const setInfo = function(options) {
 
     //let web_earth = '<a target="_blank" href="https://earth.google.com/web/@' + options.lat + ',' + options.lon + ',146.726a,'+ user.view_distance / 2 +'d,50y,0h,25t,0r"> <i class="fas fa-globe"></i>&nbsp;</a>';
 
-    let header;
-
     $("div#info").replaceWith(
       '<div id="info">' +
 
@@ -945,7 +971,15 @@ const setInfo = function(options) {
     let natgeo = '<a target="_blank" title="national geographic" href="https://www.nationalgeographic.com/search/?q='+ user.state + '"> <i class="fas fa-atlas"></i>&nbsp; </a>';
     let tribes = '<a target="_blank" title="native people" href="https://www.culturalsurvival.org/search/node?keys='+ user.state + '"> <i class="fas fa-child"></i>&nbsp; </a>';
 
-    let header;
+    let nps = ' ';
+
+    if ( options.news.length > 0 ){
+
+      for (let i = 0; i < options.news.length; i++) {
+        nps = nps + '<li class="nps"><a target="_blank" href="http://' + options.news[i].link + ' ">' + options.news[i].name + '</a> </li>';
+      }
+
+    }
 
     $("div#info").replaceWith(
       '<div id="info">' +
@@ -960,6 +994,7 @@ const setInfo = function(options) {
       '<li>' + web_images + '</li>' +
       '<li>' + videos + '</li>' +
       '<li>' + radio + '</li>' +
+      '<li><a href="#" title="news"><i class="far fa-newspaper"></i> </a> <ul class="nps">' + nps + '</li></ul>' +
       '<li>' + natgeo + '</li>' +
       '<li>' + art + '</li>' +
       '<li>' + books + '</li>' +
@@ -1014,13 +1049,15 @@ const setInfo = function(options) {
 
     let nps = ' ' + gdelt;
 
-    for (let i = 0; i < options.news.length; i++) {
-      nps = nps + '<li class="nps"><a target="_blank" href="https://translate.google.com/translate?js=n&sl=auto&tl=destination_language&u=http://' + options.news[i].link + ' ">' + options.news[i].name + '</a> </li>';
+    if ( options.news.length != undefined && options.news.length > 0 ){
+
+      for (let i = 0; i < options.news.length; i++) {
+        nps = nps + '<li class="nps"><a target="_blank" href="https://translate.google.com/translate?js=n&sl=auto&tl=destination_language&u=http://' + options.news[i].link + ' ">' + options.news[i].name + '</a> </li>';
+      }
+
     }
 
     let web_earth = '<a target="_blank" href="https://earth.google.com/web/@' + options.lat + ',' + options.lon + ',146.726a,' + user.view_distance / 2 + 'd,50y,0h,25t,0r"> <i class="fas fa-globe"></i>&nbsp;</a>';
-
-    let header;
 
     $("div#info").replaceWith(
       '<div id="info">' +
@@ -1060,16 +1097,36 @@ const setInfo = function(options) {
     let state_name = '';
 
     let web_images = '';
+    let nps = '';
 
     if ( user.state !== '') { // state city
 
       state_name = ', ' + user.state;
       web_images = '<a target="myframe" title="photos" href="https://www.bing.com/images/search?&q=%22' + options.city_latin + '%22' + state_name + '&qft=+filterui:photo-photo&FORM=IRFLTR"> <i class="far fa-images"></i> &nbsp;</a>';
 
+
+      if ( options.news.length != undefined && options.news.length > 0 ){
+
+        for (let i = 0; i < options.news.length; i++) {
+          nps = nps + '<li class="nps"><a target="_blank" href="http://' + options.news[i].link + ' ">' + options.news[i].name + '</a> </li>';
+
+        }
+      }
+
+
     }
     else { // country city
 
       web_images = '<a target="myframe" title="photos" href="https://www.bing.com/images/search?&q=%22' + options.city_latin + '%22' + state_name + ', ' + user.cname + '&qft=+filterui:photo-photo&FORM=IRFLTR"> <i class="far fa-images"></i> &nbsp;</a>';
+
+      if ( options.news.length > 0 ){
+
+        for (let i = 0; i < options.news.length; i++) {
+          nps = nps + '<li class="nps"><a target="_blank" href="http://' + options.news[i].link + ' ">' + options.news[i].name + '</a> </li>';
+
+        }
+      }
+
 
     }
 
@@ -1104,19 +1161,10 @@ const setInfo = function(options) {
     let gdelt_cname = user.cname.replace(/\s/g, '');
     let gdelt  = '<li class="nps"><a target="myframe" href="https://api.gdeltproject.org/api/v1/search_ftxtsearch/search_ftxtsearch?query=sourcecountry:' + gdelt_cname + '&output=artimglist&outputtype=english&trans=googtrans&maxrows=100&dropdup"> <i class="fas fa-star"></i> GDELT headlines </a></li>';
 
-    let nps = gdelt;
-
-    for (let i = 0; i < options.news.length; i++) {
-      nps = nps + '<li class="nps"><a target="_blank" href="https://translate.google.com/translate?js=n&sl=auto&tl=destination_language&u=http://' + options.news[i].link + ' ">' + options.news[i].name + '</a> </li>';
-
-    }
-
     // see: https://www.gearthblog.com/blog/archives/2017/04/fun-stuff-new-google-earth-url.html
     let web_earth = '<a target="_blank" href="https://earth.google.com/web/@' + options.lat + ',' + options.lon + ',146.726a,' + user.view_distance / 2 + 'd,50y,0h,25t,0r"> <i class="fas fa-globe"></i>&nbsp;</a>';
 
     let natgeo = '<a target="_blank" title="national geographic" href="https://www.nationalgeographic.com/search/?q='+ options.city_latin + state_name + '"> <i class="fas fa-atlas"></i>&nbsp; </a>';
-
-    let header;
 
     $("div#info").replaceWith(
       '<div id="info">' +
@@ -1132,7 +1180,7 @@ const setInfo = function(options) {
       '<li>' + web_images + '</li>' +
       '<li>' + videos + '</li>' +
       '<li>' + radio + '</li>' +
-      '<li><a href="#" title="news"><i class="far fa-newspaper"></i> </a> <ul class="nps">' + nps + '</li></ul>' +
+      '<li><a href="#" title="news"><i class="far fa-newspaper"></i> </a> <ul class="nps">' + gdelt + nps + '</li></ul>' +
       '<li>' + books + '</li>' +
       '<li>' + natgeo + '</li>' +
       '<li>' + art + '</li>' +
@@ -1277,6 +1325,7 @@ const addExtraLayers = function() {
   addLayerRivers();
   addLayerUrbanizations();
   addLayerSeas();
+  //addLayerPorts();
 };
 
 const addLayerRivers = function() {
@@ -1361,8 +1410,42 @@ const addLayerRivers = function() {
     });
 };
 
-const addLayerSeas = function() {
+const addLayerUrbanizations = function() {
 
+  let u = new og.layer.Vector("Urbanizations", {
+    'visibility': true,
+    'isBaseLayer': false,
+    'diffuse': [0, 0, 0],
+    'ambient': [1, 1, 1],
+    'maxZoom': 10,
+    'zIndex': 10,
+    'pickingEnabled': false,
+  });
+
+  u.addTo(globe.planet);
+
+	db.urbanizations
+		.each (function (urb) {
+
+    u.add(new og.Entity({
+
+      'geometry': {
+        'type': urb.geometry.type,
+        'coordinates': urb.geometry.coordinates,
+        'style': {
+          'fillColor': "rgba(200,100,100,0.7)",
+          'lineColor': "rgba(200,100,100,0.9)",
+          'strokeWidth': 1,
+        },
+      }
+    }));
+
+  })
+
+  $('#progressbar').hide();
+};
+
+const addLayerSeas = function() {
 
   fetch("./data/json/seas.json?v001") // TODO: store in DB?
     .then(r => {
@@ -1429,42 +1512,74 @@ const addLayerSeas = function() {
     });
 };
 
+const addLayerPorts = function() {
 
+  fetch("./data/json/ports.json?v001") // TODO: store in DB?
+    .then(r => {
+      return r.json();
+    }).then(data => {
 
-const addLayerUrbanizations = function() {
+      let ports = new og.layer.Vector("Sea ports", {
+        'visibility': true,
+        'isBaseLayer': false,
+        'diffuse': [0, 0, 0],
+        'ambient': [1, 1, 1],
+        //'maxZoom': 6,
+      });
 
-  let u = new og.layer.Vector("Urbanizations", {
-    'visibility': true,
-    'isBaseLayer': false,
-    'diffuse': [0, 0, 0],
-    'ambient': [1, 1, 1],
-    'maxZoom': 10,
-    'zIndex': 10,
-    'pickingEnabled': false,
-  });
+      ports.addTo(globe.planet);
 
-  u.addTo(globe.planet);
+      let f = data.features;
 
-	db.urbanizations
-		.each (function (urb) {
+      for (let i = 0; i < f.length; i++) {
+        let fi = f[i];
 
-    u.add(new og.Entity({
+        //console.log( fi );
 
-      'geometry': {
-        'type': urb.geometry.type,
-        'coordinates': urb.geometry.coordinates,
-        'style': {
-          'fillColor': "rgba(200,100,100,0.7)",
-          'lineColor': "rgba(200,100,100,0.9)",
-          'strokeWidth': 1,
-        },
+        ports.add(new og.Entity({
+          'properties': {
+            'name': 'Sea port' + fi.properties.sr_subunit,
+            'country': fi.properties.sr_subunit,
+            'ccode3': fi.properties.sr_brk_a3,
+          },
+          //'lonlat': [ 4.4777325,  51.9244201, 1000 ],
+          'lonlat': [ fi.geometry.coordinates[0], fi.geometry.coordinates[1], 1 ],
+          'billboard': {
+            'src': './assets/img/port.png',
+            'size': [40, 40],
+          },
+
+        }));
       }
-    }));
 
-  })
+      ports.events.on("mouseleave", function(e) {
+        //e.pickingObject.geometry.setLineColor(206,206,45,0.9);
+      });
 
-  $('#progressbar').hide();
+      ports.events.on("mouseenter", function(e) {
+        //e.pickingObject.geometry.bringToFront();
+        //e.pickingObject.geometry.setLineColor(255,255,255, 1.0);
+      });
+
+      ports.events.on("lclick", function(e) {
+        //console.log(e.pickingObject.properties.name);
+        setInfo({
+          'extra': true,
+          'type': 'port',
+          'name': latinize(e.pickingObject.properties.name),
+          'extent': e.pickingObject.geometry.getExtent()
+        });
+      });
+
+      ports.events.on("touchstart", function(e) {
+        globe.planet.flyExtent(e.pickingObject.geometry.getExtent());
+      });
+
+
+    });
 };
+
+
 
 function randombg(){
   let random = Math.floor(Math.random() * 15) + 0;
