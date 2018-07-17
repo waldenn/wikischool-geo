@@ -607,11 +607,20 @@ const addNearbyMarks = function( lon, lat, type, name, radius, limit ){
         });
 
         nearby_markers.events.on("lclick", function (e) {
-          $('#myframe').attr({"src":'https://en.m.wikipedia.org/wiki/' + e.pickingObject.label._text });
+
+          setInfo({
+            'name': e.pickingObject.label._text,
+            'type': 'place',
+            'lat': lat,
+            'lon': lon,
+            'extra': true,
+            'wikipedia': lon,
+          });
+
         });
 
         nearby_markers.events.on("mouseenter", function(e) {
-         e.renderer.handler.canvas.style.cursor = "pointer";
+          e.renderer.handler.canvas.style.cursor = "pointer";
         });
 
         nearby_markers.events.on("mouseleave", function(e) {
@@ -875,7 +884,13 @@ const setInfo = function(options) {
       tribes = '<li><a target="_blank" title="native people" href="https://www.culturalsurvival.org/search/node?keys='+ options.name + specifier.toLowerCase() + '"> <i class="fas fa-child"></i>&nbsp; </a></li>';
     }
 
-    globe.planet.flyExtent(options.extent);
+    if ( options.type == 'place'){
+      let pos_ = new og.LonLat( options.lon, options.lat, user.view_distance );
+      globe.planet.flyLonLat( pos_ );
+    }
+    else {
+      globe.planet.flyExtent(options.extent);
+    }
 
     let type = '&nbsp;&nbsp;<span style="font-size:50%;color:darkgray"> (' + options.type + ')</span>';
     let headline = '<h1>' + options.name + type + '</h1><br/>';
@@ -1178,9 +1193,12 @@ const setInfo = function(options) {
 
   }
 
-  $('#myframe').attr({
-    "src": ""
-  });
+  if ( options.url !== ''){
+    $('#myframe').attr({"src": options.url });
+  }
+  else {
+    $('#myframe').attr({ "src": "" });
+  }
 
   $('a#wikipedia_main')[0].click();
 }
