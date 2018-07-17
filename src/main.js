@@ -161,6 +161,7 @@ const initDB = function() {
       countries: "++",
       cities: "id, iso2",
       urbanizations: "++",
+      lakes: "++",
       news: "++, country, state",
     });
 
@@ -228,39 +229,52 @@ const initDB = function() {
                 db.cities.bulkAdd(cities_.data).then(function(lastKey) {
 
                   user.cities_loaded = true;
-                  $('#progressbar').css({ 'width': '60%' }).html('60% ...loading urbanizations');
+                  $('#progressbar').css({ 'width': '50%' }).html('50% ...loading urbanizations');
 
-                  fetch("./data/json/urbanizations.json?v001")
+                  fetch("./data/json/urbanizations.json?v005")
                     .then(r => {
                       return r.json();
                     }).then(urbanizations_ => {
 
                       db.urbanizations.bulkAdd(urbanizations_.features).then(function(lastKey) {
 
-                        $('#progressbar').css({ 'width': '70%' }).html('70% ...loading news sources');
+                        $('#progressbar').css({ 'width': '60%' }).html('60% ...loading lakes');
 
-                        // add news sources
-                        Papa.parse('./data/csv/news.csv?004', {
+                        fetch("./data/json/lakes.json?v006")
+                          .then(r => {
+                            return r.json();
+                          }).then(lakes_ => {
 
-                          download: true,
-                          delimiter: ",",
-                          header: true,
-                          fastMode: true,
+                            db.lakes.bulkAdd(lakes_.features).then(function(lastKey) {
 
-                          complete: function(news_) {
+                                $('#progressbar').css({ 'width': '70%' }).html('70% ...loading news sources');
 
-                            $('#progressbar').css({ 'width': '75%' }).html('75% ...caching news sources');
+                                // add news sources
+                                Papa.parse('./data/csv/news.csv?004', {
 
-                            db.news.bulkAdd(news_.data).then(function(lastKey) {
+                                  download: true,
+                                  delimiter: ",",
+                                  header: true,
+                                  fastMode: true,
 
-                              $('#progressbar').css({ 'width': '80%' }).html('80% ...loading visuals');
-                              main();
+                                  complete: function(news_) {
+
+                                    $('#progressbar').css({ 'width': '75%' }).html('75% ...caching news sources');
+
+                                    db.news.bulkAdd(news_.data).then(function(lastKey) {
+
+                                      $('#progressbar').css({ 'width': '80%' }).html('80% ...loading visuals');
+                                      main();
+
+                                    });
+
+                                  },
+
+                                });
 
                             });
 
-                          },
-
-                        });
+                          });
 
                        }).catch(Dexie.BulkError, function(e) {
                         console.log('failures: ' + e.failures.length );
@@ -809,7 +823,11 @@ const initButtonEvents = function() {
       globe.planet.flyExtent(user.country_extent);
       user.city = '';
 
-      setInfo({ 'type': 'country' });
+      db.news.where('country').equals(user.ccode2).toArray().then(function(matches) {
+
+        setInfo( { 'type': 'country', 'news': matches.sortBy('name') } );
+
+      })
 
     } else if ( user.state !== '') {
       //console.log('back to US country');
@@ -969,9 +987,10 @@ const setInfo = function(options) {
     let books = '<a target="myframe" title="books" href="https://wikischool.org/search/'+ user.state + ', ' + user.cname + '#g.books"> <i class="fas fa-book"></i>&nbsp; </a>';
     //let architecture = '<a target="myframe" title="architecture" href="https://worldarchitecture.org/search/?q='+  user.state + ', ' + user.cname + '"> <i class="fab fa-fort-awesome"></i>&nbsp; </a>';
     let natgeo = '<a target="_blank" title="national geographic" href="https://www.nationalgeographic.com/search/?q='+ user.state + '"> <i class="fas fa-atlas"></i>&nbsp; </a>';
-    let tribes = '<a target="_blank" title="native people" href="https://www.culturalsurvival.org/search/node?keys='+ user.state + '"> <i class="fas fa-child"></i>&nbsp; </a>';
+    let tribes = '<li class="nps"><a target="_blank" title="native people" href="https://www.culturalsurvival.org/search/node?keys='+ user.state + '"> <i class="fas fa-child"></i> indigenous news</a></li>';
+    let gdelt = '';
 
-    let nps = ' ';
+    let nps = ' ' + gdelt + tribes;
 
     if ( options.news.length > 0 ){
 
@@ -1001,7 +1020,7 @@ const setInfo = function(options) {
       '<li>' + web_earth + '</li>' +
       '<li>' + travel + '</li>' +
       //'<li>' + architecture + '</li>' +
-      '<li>' + tribes + '</li>' +
+      //'<li>' + tribes + '</li>' +
       '<li>' + searx + '</li>' +
       '<li>' + archiveorg + '</li>' +
       //'<li><a href="#" title="wikischool menu"><i class="fas fa-university"></i></a> <ul> <li>' + wikischool + '</li> <li>' + wikischool_main + ' </li> </ul> ' +
@@ -1038,7 +1057,7 @@ const setInfo = function(options) {
     let art = '<a target="_blank" title="art" href="https://artsandculture.google.com/search?q=' + user.cname.toLowerCase() + '"> <i class="fas fa-palette"></i>&nbsp; </a>';
     let books = '<a target="myframe" title="books" href="https://wikischool.org/search/'+ user.cname.toLowerCase() + '#g.books"> <i class="fas fa-book"></i>&nbsp; </a>';
     //let architecture = '<a target="myframe" title="architecture" href="https://worldarchitecture.org/search/?q='+ user.cname.toLowerCase() + '"> <i class="fab fa-fort-awesome"></i>&nbsp; </a>';
-    let tribes = '<a target="_blank" title="native people" href="https://www.culturalsurvival.org/search/node?keys='+ user.cname + '"> <i class="fas fa-child"></i>&nbsp; </a>';
+    let tribes = '<li class="nps"><a target="_blank" title="native people" href="https://www.culturalsurvival.org/search/node?keys='+ user.cname + '"> <i class="fas fa-child"></i> indigenous news </a></li>';
     let natgeo = '<a target="_blank" title="national geographic" href="https://www.nationalgeographic.com/search/?q='+ user.cname + '"> <i class="fas fa-atlas"></i>&nbsp; </a>';
 
     // see:
@@ -1047,7 +1066,7 @@ const setInfo = function(options) {
     let gdelt_cname = user.cname.replace(/\s/g, '');
     let gdelt  = '<li class="nps"><a target="myframe" href="https://api.gdeltproject.org/api/v1/search_ftxtsearch/search_ftxtsearch?query=sourcecountry:' + gdelt_cname +  '&output=artimglist&outputtype=english&trans=googtrans&maxrows=100&dropdup"> <i class="fas fa-star"></i> GDELT headlines</a></li>';
 
-    let nps = ' ' + gdelt;
+    let nps = ' ' + gdelt + tribes;
 
     if ( options.news.length != undefined && options.news.length > 0 ){
 
@@ -1079,7 +1098,7 @@ const setInfo = function(options) {
       '<li>' + web_earth + '</li>' +
       '<li>' + travel + '</li>' +
       //'<li>' + architecture + '</li>' +
-      '<li>' + tribes + '</li>' +
+      //'<li>' + tribes + '</li>' +
       '<li>' + searx + '</li>' +
       '<li>' + archiveorg + '</li>' +
       //'<li>' + gdelt + '</li>' +
@@ -1092,7 +1111,7 @@ const setInfo = function(options) {
 
   } else { // city
 
-    let type = '&nbsp;&nbsp;<span style="font-size:50%;color:darkgray"> ' + options.type + ' </span>';
+    let type = '&nbsp;&nbsp;<span style="font-size:50%;color:darkgray"> (' + options.type + ') </span>';
 
     let state_name = '';
 
@@ -1325,6 +1344,7 @@ const addExtraLayers = function() {
   addLayerRivers();
   addLayerUrbanizations();
   addLayerSeas();
+  addLayerLakes();
   //addLayerPorts();
 };
 
@@ -1341,7 +1361,8 @@ const addLayerRivers = function() {
         'visibility': true,
         'isBaseLayer': false,
         'diffuse': [0, 0, 0],
-        'ambient': [1, 1, 1]
+        'ambient': [1, 1, 1],
+        'zIndex': 20,
       });
 
       rivers.addTo(globe.planet);
@@ -1355,6 +1376,7 @@ const addLayerRivers = function() {
 
         rivers.add(new og.Entity({
           'properties': {
+            'id': fi.properties.name,
             'name': fi.properties.name,
           },
           /*
@@ -1376,8 +1398,8 @@ const addLayerRivers = function() {
               //'fillColor': "rgba(150,150,255,0.6)",
               //'fillColor': "rgba(206,206,45,0.8)",
               'lineColor': "rgba(206,206,45,0.9)",
-              //'strokeColor': "rgba(206,206,45,0.8)",
-              'strokeWidth': 4,
+              //'strokeColor': "rgba(206,206,45,0.9)",
+              //'strokeWidth': 4,
               //'thickness': 30,
             },
           }
@@ -1385,15 +1407,15 @@ const addLayerRivers = function() {
       }
 
       rivers.events.on("mouseenter", function(e) {
-        //e.renderer.handler.canvas.style.cursor = "pointer";
-       e.pickingObject.geometry.bringToFront();
-        //e.pickingObject.geometry.setLineColor(255,255,255, 1.0);
+       e.renderer.handler.canvas.style.cursor = "pointer";
+       //e.pickingObject.geometry.bringToFront();
+       //e.pickingObject.geometry.setLineColor(206,206,45,0.9);
       });
 
-      //rivers.events.on("mouseleave", function(e) {
+      rivers.events.on("mouseleave", function(e) {
         //e.pickingObject.geometry.setLineColor(206,206,45,0.9);
-        //e.renderer.handler.canvas.style.cursor = "default";
-      //});
+        e.renderer.handler.canvas.style.cursor = "default";
+      });
 
       rivers.events.on("lclick", function(e) {
         setInfo({
@@ -1434,8 +1456,8 @@ const addLayerUrbanizations = function() {
         'coordinates': urb.geometry.coordinates,
         'style': {
           'fillColor': "rgba(200,100,100,0.7)",
-          'lineColor': "rgba(200,100,100,0.9)",
-          'strokeWidth': 1,
+          'lineColor': "rgba(200,100,100,0.7)",
+          //'strokeWidth': 1,
         },
       }
     }));
@@ -1443,6 +1465,55 @@ const addLayerUrbanizations = function() {
   })
 
   $('#progressbar').hide();
+};
+
+const addLayerLakes = function() {
+
+  let l = new og.layer.Vector("Lakes", {
+    'visibility': true,
+    'isBaseLayer': false,
+    'diffuse': [0, 0, 0],
+    'ambient': [1, 1, 1],
+    'maxZoom': 10,
+    'zIndex': 10,
+    'pickingEnabled': true,
+  });
+
+  l.addTo(globe.planet);
+
+	db.lakes
+		.each (function (lake) {
+
+    l.add(new og.Entity({
+
+        'properties': {
+          'name': lake.properties.name,
+        },
+        'geometry': {
+          'type': lake.geometry.type,
+          'coordinates': lake.geometry.coordinates,
+          'style': {
+            'fillColor': "rgba(100,100,200,0.7)",
+            'lineColor': "rgba(100,100,200,0.9)",
+            'strokeWidth': 1,
+          },
+        },
+
+    }));
+
+  })
+
+  l.events.on("lclick", function(e) {
+
+      setInfo({
+        'extra': true,
+        'type': 'lake',
+        'name': latinize(e.pickingObject.properties.name),
+        'extent': e.pickingObject.geometry.getExtent()
+      });
+
+  });
+
 };
 
 const addLayerSeas = function() {
