@@ -1,24 +1,52 @@
 TODO:
 
-  - BUG: US state resetInfoPane() not working anymore
-  - BUG: always make "go up/down" buttons work (when possible)
-    - from URL hash
-    - from autocomplete
-  - BUG: also load country meta-data (extents, newspapers, ...) when open a geohash-url
+  - add random location button
+
+  - make extents work reliably (wheter coming from a browse, geohash or autocomplete mode)
+    - UP: one level up (unless at planet scale)
+    - DOWN: one level down (unless at city scale)
+      country -> capital
+      
+  - update URL hash, respond to URL hash updates
+    - make html5 history work
+
+  - stop zooming out after a certain scale
+
+  ---------------------
+
+  - add US news sources
+    - don't translate news for english-speaking countries: Antigua and Barbuda, Australia, The Bahamas, Barbados, Belize, Canada*, Dominica, Grenada, Guyana, Ireland, Jamaica, New Zealand, St Kitts and Nevis, St Lucia, St Vincent and the Grenadines, Trinidad and Tobago, United Kingdom, United States of America,
+
+  - allow multi-phrase search in #geo searches (OR: remove extra phrases after the first comma)
+
+  country -> continent mapping:
+    https://gist.githubusercontent.com/indexzero/11338529/raw/c0095d8943aea3a5751c21f8fa8a1fcd7a3bd6e7/continents.json
+
+  CIA fact book:
+    https://github.com/waldenn/factbook.json
+
+  - world sea ports
+    https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_10m_admin_0_label_points.geojson
+    https://github.com/marchah/sea-ports/blob/master/lib/ports.json
+    https://raw.githubusercontent.com/mapbox/ios-sdk-examples/master/Examples/Files/ports.geojson
+
   - BUG: set correct lat-lon for google-earth in coutry views
-  - update URL hash on location changes
+
   - indicate country-capitals (and US-state-capitals)
+  
   - implement button to re-align the North-South axis with the screen from any app state
+  
   - country data fixes / addons:
     - setup custom view-port for viewing Denmark, France, UK, ...
     - add missing countries (Kiribati, etc.)
     - fix bad country geometries (eg. Denmark Fyn)
+    
   - cleanup code structure
     - use a nodejs template
     - consider something like Svelte Sapper for a better application structure? https://sapper.svelte.technology/
     - rewrite the few jQuery uses in vanilla JS?
+    
   - better HTML templating system needed?
-  - fix nearby-places code
 
   - more robust wikipedia-article checking algorithm:
     - options:
@@ -46,13 +74,14 @@ TODO:
     - ...
 
 To consider:
+
   - Google Earth mouse-controls ??
+  
   - general keyboard navigation controls (show onscreen help for these)
     - ...
     - arrow-key movement
+    
   - specific keyboard navigation controls
-  - fly-mode: see https://www.youtube.com/watch?v=Hu8Yd3-WbP4 (at about 11:00)
-  - transparency-layering (already possible?): see https://www.youtube.com/watch?v=Hu8Yd3-WbP4 (at about 15:00)
 
   - timeline slider concept:
     https://ourworldindata.org/slides/war-and-violence/#/11
