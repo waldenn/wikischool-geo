@@ -326,12 +326,12 @@ const initGeoData = function() {
   $('#progressbar').css({ 'width': '100%' }).html('100%');
 
    for (let i = 0; i < countries.length; i++) {
-    let c = countries[i];
+
     countries_.add(new og.Entity({
       'id': i,
       'geometry': {
-        'type': c.geometry_type,
-        'coordinates': c.geometry_coordinates,
+        'type': countries[i].geometry_type,
+        'coordinates': countries[i].geometry_coordinates,
         'style': {
           'fillColor': "rgba(255,255,255,0.1)",
         }
@@ -1360,8 +1360,8 @@ const addLayerRivers = function() {
       let rivers = new og.layer.Vector("Rivers", {
         'visibility': true,
         'isBaseLayer': false,
-        'diffuse': [0, 0, 0],
-        'ambient': [1, 1, 1],
+        //'diffuse': [0, 0, 0],
+        //'ambient': [1, 1, 1],
         'zIndex': 20,
       });
 
@@ -1437,8 +1437,8 @@ const addLayerUrbanizations = function() {
   let u = new og.layer.Vector("Urbanizations", {
     'visibility': true,
     'isBaseLayer': false,
-    'diffuse': [0, 0, 0],
-    'ambient': [1, 1, 1],
+    //'diffuse': [0, 0, 0],
+    //'ambient': [1, 1, 1],
     'maxZoom': 10,
     'zIndex': 10,
     'pickingEnabled': false,
@@ -1446,21 +1446,23 @@ const addLayerUrbanizations = function() {
 
   u.addTo(globe.planet);
 
-	db.urbanizations
-		.each (function (urb) {
+  db.urbanizations.toArray(function(urbs) {
 
-    u.add(new og.Entity({
+    for (let i = 0; i < urbs.length; i++) {
 
-      'geometry': {
-        'type': urb.geometry.type,
-        'coordinates': urb.geometry.coordinates,
-        'style': {
-          'fillColor': "rgba(200,100,100,0.7)",
-          'lineColor': "rgba(200,100,100,0.7)",
-          //'strokeWidth': 1,
+      u.add(new og.Entity({
+
+        'geometry': {
+          'type': urbs[i].geometry.type,
+          'coordinates': urbs[i].geometry.coordinates,
+          'style': {
+            'fillColor': "rgba(200,100,100,0.7)",
+            'lineColor': "rgba(200,100,100,0.7)",
+            //'strokeWidth': 1,
+          },
         },
-      }
-    }));
+      }));
+    }
 
   })
 
@@ -1472,34 +1474,35 @@ const addLayerLakes = function() {
   let l = new og.layer.Vector("Lakes", {
     'visibility': true,
     'isBaseLayer': false,
-    'diffuse': [0, 0, 0],
-    'ambient': [1, 1, 1],
-    'maxZoom': 10,
+    //'diffuse': [0, 0, 0],
+    //'ambient': [1, 1, 1],
+    'maxZoom': 7,
     'zIndex': 10,
     'pickingEnabled': true,
   });
 
   l.addTo(globe.planet);
 
-	db.lakes
-		.each (function (lake) {
+  db.lakes.toArray(function(lakes) {
 
-    l.add(new og.Entity({
+    for (let i = 0; i < lakes.length; i++) {
+
+      l.add(new og.Entity({
 
         'properties': {
-          'name': lake.properties.name,
+          'name': lakes[i].properties.name,
         },
         'geometry': {
-          'type': lake.geometry.type,
-          'coordinates': lake.geometry.coordinates,
+          'type': lakes[i].geometry.type,
+          'coordinates': lakes[i].geometry.coordinates,
           'style': {
-            'fillColor': "rgba(100,100,200,0.7)",
+            'fillColor': "rgba(100,100,200,0.9)",
             'lineColor': "rgba(100,100,200,0.9)",
-            'strokeWidth': 1,
+            //'strokeWidth': 1,
           },
         },
-
-    }));
+      }));
+    }
 
   })
 
