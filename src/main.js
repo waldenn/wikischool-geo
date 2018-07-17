@@ -75,6 +75,8 @@ placeMarkers.events.on("lclick", function(e) {
       'news': matches.sortBy('name'),
     });
 
+    addNearbyMarks( e.pickingObject._lonlat.lon, e.pickingObject._lonlat.lat, 'city', user.city, 5000, 20 );
+
     globe.planet.flyLonLat( new og.LonLat(e.pickingObject._lonlat.lon, e.pickingObject._lonlat.lat, user.view_distance) );
 
   });
@@ -94,6 +96,8 @@ placeLabels.events.on("lclick", function(e) {
       'lon': e.pickingObject._lonlat.lon,
       'news': matches.sortBy('name'),
     });
+
+    addNearbyMarks( e.pickingObject._lonlat.lon, e.pickingObject._lonlat.lat, 'city', user.city, 5000, 20 );
 
     globe.planet.flyLonLat( new og.LonLat(e.pickingObject._lonlat.lon, e.pickingObject._lonlat.lat, user.view_distance) );
 
@@ -240,7 +244,7 @@ const initDB = function() {
 
                         $('#progressbar').css({ 'width': '60%' }).html('60% ...loading lakes');
 
-                        fetch("./data/json/lakes.json?v006")
+                        fetch("./data/json/lakes.json?v007")
                           .then(r => {
                             return r.json();
                           }).then(lakes_ => {
@@ -515,29 +519,7 @@ const initGeoData = function() {
         //placeLabels.setEntities(labels);
         placeMarkers.setEntities(markers);
 
-        // fetch news of this country
-
-        /*
-        db.news.where('country').equals(user.ccode2).toArray().then(function(matches) {
-
-          if ( user.state === '') { // country city
-            setInfo({
-              'type': 'country',
-              'news': matches.sortBy('name'),
-            });
-          } else { // state city
-
-            user.city == '';
-
-            setInfo({
-              'type': 'state',
-              'news': matches.sortBy('name'),
-            });
-          }
-
-        })
-        */
-
+        // fetch news
         if ( user.state === '') { // country city
 
           db.news.where('country').equals(user.ccode2).toArray().then(function(matches) {
@@ -562,98 +544,7 @@ const initGeoData = function() {
         console.log("Error finding in cities: " + (e.stack || e));
       });
 
-
-    /* FIXME
-
-          let markers = new og.EntityCollection({
-              'entities': entities,
-              'scaleByDistance': [60000, 2400000, 10000000000]
-              //'scaleByDistance': [6000000, 24000000, 10000000000]
-          });
-
-          globe.planet.entityCollections = []; // reset
-
-          markers.events.on("lclick", function (e) {
-
-              //console.log( e.pickingObject , user.cname );
-              user.city = e.pickingObject.label._text;
-
-              setInfo( { 'type': 'city', 'city_latin': latinize( user.city ), 'lat': e.pickingObject._lonlat.lat, 'lon' : e.pickingObject._lonlat.lon } );
-
-               let pos_ = new og.LonLat( e.pickingObject._lonlat.lon, e.pickingObject._lonlat.lat, user.view_distance );
-              globe.planet.flyLonLat( pos_ );
-
-              // fetch nearby of this country
-              fetch('https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&list=geosearch&formatversion=1&gscoord=' + e.pickingObject._lonlat.lat +'%7C' + e.pickingObject._lonlat.lon + '&gsradius=10000&gslimit=10')
-
-                  .then(r => {
-                      return r.json();
-                  }).then( nearbys => {
-
-                    console.log( nearbys.query.geosearch );
-                     let nbs = nearbys.query.geosearch;
-                    // add these entities
-
-                     let nearby_entities = [];
-
-                    for ( let i = 0; i < nbs.length; i++) {
-                          console.log( nbs[i] );
-
-                          // skip item with the same name as the active city 
-                          //console.log ( nbs[i].title, ' --- ',  user.city);
-                          if ( nbs[i].title == user.city) {
-                            continue;
-                          }
-
-                          nearby_entities.push(new og.Entity({
-                              'name':  nbs[i].title,
-                              'label': {
-                                  'text': nbs[i].title,
-                                  'outline': 0.77,
-                                  'outlineColor': "rgba(255,255,255,.4)",
-                                  'size': 20,
-                                  'color': "black",
-                                  'face': "Lucida Console",
-                                  'offset': [10, -2]
-                              },
-                              'lonlat': [ nbs[i].lon , nbs[i].lat , 100 ],
-                              'billboard': {
-                                  'src': './assets/img/nearby.png',
-                                  'size': [20, 20],
-                                  'color': 'yellow',
-                              },
-                              'properties': {
-                                  'color': 'yellow'
-                              }
-                          }));
-
-                    }
-
-                     let nearby_markers = new og.EntityCollection({
-                        'entities': nearby_entities,
-                        'scaleByDistance': [60000, 2400000, 10000000000]
-                        //'scaleByDistance': [6000000, 24000000, 10000000000]
-                    });
-
-                    nearby_markers.events.on("lclick", function (e) {
-
-                      console.log( 'https://en.m.wikipedia.org/wiki/' + e.pickingObject.label._text );
-                      $('#myframe').attr({"src":'https://en.m.wikipedia.org/wiki/' + e.pickingObject.label._text });
-                      //$('a#wikipedia_main')[0].click();
-
-
-                    });
-
-                    nearby_markers.addTo(globe.planet);
-
-                });
-
-            });
-
-            markers.addTo(globe.planet);
-
-      });
-      */
+      //addNearbyMarks();
 
   });
 
@@ -664,6 +555,74 @@ const initGeoData = function() {
   });
 
 };
+
+const addNearbyMarks = function( lon, lat, type, name, radius, limit ){
+
+   //globe.planet.entityCollections = []; // reset
+
+  // fetch nearby data
+  fetch('https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&list=geosearch&formatversion=1&gscoord=' + lat +'%7C' + lon + '&gsradius=' + radius + '&gslimit=' + limit ).then(r => { return r.json(); }).then( nearbys => {
+
+        //console.log( nearbys.query.geosearch );
+
+        // add these nearby objects to the map
+        let nbs = nearbys.query.geosearch;
+        let nearby_entities = [];
+
+        for ( let i = 0; i < nbs.length; i++) {
+              //console.log( nbs[i] );
+
+              // skip found nearby when it has the same name as the active place 
+              if ( nbs[i].title == name ) {
+                continue;
+              }
+
+              nearby_entities.push(new og.Entity({
+                  'name':  nbs[i].title,
+                  'label': {
+                      'text': nbs[i].title,
+                      'outline': 0.77,
+                      'outlineColor': "rgba(255,255,255,.4)",
+                      'size': 20,
+                      'color': "black",
+                      'face': "Lucida Console",
+                      'offset': [10, -2]
+                  },
+                  'lonlat': [ nbs[i].lon , nbs[i].lat , 100 ],
+                  'billboard': {
+                      'src': './assets/img/nearby.png',
+                      'size': [20, 20],
+                      //'color': 'yellow',
+                  },
+                  'properties': {
+                      'color': 'yellow'
+                  }
+              }));
+
+        }
+
+         let nearby_markers = new og.EntityCollection({
+            'entities': nearby_entities,
+            'scaleByDistance': [60000, 2400000, 10000000000]
+        });
+
+        nearby_markers.events.on("lclick", function (e) {
+          $('#myframe').attr({"src":'https://en.m.wikipedia.org/wiki/' + e.pickingObject.label._text });
+        });
+
+        nearby_markers.events.on("mouseenter", function(e) {
+         e.renderer.handler.canvas.style.cursor = "pointer";
+        });
+
+        nearby_markers.events.on("mouseleave", function(e) {
+          e.renderer.handler.canvas.style.cursor = "default";
+        });
+
+        nearby_markers.addTo(globe.planet);
+
+    });
+
+}
 
 
 const initAutocomplete = function() {
@@ -766,6 +725,8 @@ const initAutocomplete = function() {
         let pos_ = new og.LonLat( loc.longitude, loc.latitude, user.view_distance );
         globe.planet.flyLonLat( pos_ );
 
+        addNearbyMarks( loc.longitude, loc.latitude, 'city', user.city, 5000, 20 );
+
       })
 
     });
@@ -819,6 +780,7 @@ const initButtonEvents = function() {
       user.cname = '';
       user.city = '';
     } else if ( user.city !== undefined || user.city !== '') {
+
       //console.log('back to country');
       globe.planet.flyExtent(user.country_extent);
       user.city = '';
@@ -1476,8 +1438,8 @@ const addLayerLakes = function() {
     'isBaseLayer': false,
     //'diffuse': [0, 0, 0],
     //'ambient': [1, 1, 1],
-    'maxZoom': 7,
-    'zIndex': 10,
+    'maxZoom': 10,
+    'zIndex': 20,
     'pickingEnabled': true,
   });
 
@@ -1508,12 +1470,14 @@ const addLayerLakes = function() {
 
   l.events.on("lclick", function(e) {
 
-      setInfo({
-        'extra': true,
-        'type': 'lake',
-        'name': latinize(e.pickingObject.properties.name),
-        'extent': e.pickingObject.geometry.getExtent()
-      });
+    setInfo({
+      'extra': true,
+      'type': 'lake',
+      'name': latinize(e.pickingObject.properties.name),
+      'extent': e.pickingObject.geometry.getExtent()
+    });
+
+    //addNearbyMarks( e.pickingObject._lonlat.lon, e.pickingObject._lonlat.lat, 'city', user.city, 5000, 20 );
 
   });
 
