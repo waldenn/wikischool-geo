@@ -62,16 +62,18 @@ placeMarkers.events.on("mouseleave", function(e) {
 placeMarkers.events.on("lclick", function(e) {
 
   user.city = latinize( e.pickingObject.properties.name );
+  user.cname = e.pickingObject.properties.cname;
 
   console.log(e.pickingObject.properties );
 
   db.news.where('country').equals( e.pickingObject.properties.ccode2 ).toArray().then(function(matches) {
 
-    addNearbyMarks( e.pickingObject._lonlat.lon, e.pickingObject._lonlat.lat, 'city', user.city, 8000, 100 );
+    addNearbyMarks( e.pickingObject._lonlat.lon, e.pickingObject._lonlat.lat, 'city', user.city, user.cname, 8000, 100 );
 
     setInfo({
       'type': 'city',
       'city_latin': user.city,
+      'cname': user.cname,
       'lat': e.pickingObject._lonlat.lat,
       'lon': e.pickingObject._lonlat.lon,
       'news': matches.sortBy('name'),
@@ -89,11 +91,12 @@ placeLabels.events.on("lclick", function(e) {
 
   db.news.where('country').equals( e.pickingObject.properties.ccode2 ).toArray().then(function(matches) {
 
-    addNearbyMarks( e.pickingObject._lonlat.lon, e.pickingObject._lonlat.lat, 'city', user.city, 5000, 20 );
+    addNearbyMarks( e.pickingObject._lonlat.lon, e.pickingObject._lonlat.lat, 'city', user.city, user.cname, 5000, 20 );
 
     setInfo({
       'type': 'city',
       'city_latin': user.city,
+      'cname': user.cname,
       'lat': e.pickingObject._lonlat.lat,
       'lon': e.pickingObject._lonlat.lon,
       'news': matches.sortBy('name'),
@@ -414,6 +417,7 @@ const initGeoData = function() {
               'properties': {
                 'name': ri.name,
                 'ccode2': ri.iso2,
+                'cname': user.cname,
               }
             }));
 
@@ -451,6 +455,7 @@ const initGeoData = function() {
               'properties': {
                 'name': ri.name,
                 'ccode2': ri.iso2,
+                'cname': user.cname,
               }
             }));
 
@@ -489,6 +494,7 @@ const initGeoData = function() {
               'properties': {
                 'name': ri.name,
                 'ccode2': ri.iso2,
+                'cname': user.cname,
               }
             }));
 
@@ -557,7 +563,7 @@ const initGeoData = function() {
 
 };
 
-const addNearbyMarks = function( lon, lat, type, name, radius, limit ){
+const addNearbyMarks = function( lon, lat, type, name, country, radius, limit ){
 
    //globe.planet.entityCollections = []; // reset
 
@@ -573,7 +579,7 @@ const addNearbyMarks = function( lon, lat, type, name, radius, limit ){
         for ( let i = 0; i < nbs.length; i++) {
               //console.log( nbs[i] );
 
-              // skip found nearby when it has the same name as the active place 
+              // skip when the place name is the same name as the city name
               if ( latinize(nbs[i].title).toLowerCase() == name.toLowerCase() ) {
                 continue;
               }
@@ -615,6 +621,7 @@ const addNearbyMarks = function( lon, lat, type, name, radius, limit ){
           setInfo({
             'name': e.pickingObject.label._text,
             'type': 'place',
+            'cname': country,
             'lon': e.pickingObject._lonlat.lon,
             'lat': e.pickingObject._lonlat.lat,
             'extra': true,
@@ -731,12 +738,12 @@ const initAutocomplete = function() {
 
       mark_.addTo(globe.planet);
 
+      addNearbyMarks( loc.longitude, loc.latitude, 'city', user.city, user.cname, 8000, 100 );
+
       // fetch news of this country
       db.news.where('country').equals(user.ccode2).toArray().then(function(matches) {
 
-        addNearbyMarks( loc.longitude, loc.latitude, 'city', user.city, 8000, 100 );
-
-        setInfo( { 'type': 'city', 'city_latin': latinize( user.city ), 'lat': loc.latitude, 'lon' : loc.longitude, 'news': matches.sortBy('name') } );
+        setInfo( { 'type': 'city', 'cname': user.cname, 'ccode2': user.ccode2, 'ccode3': user.ccode3, 'city_latin': latinize( user.city ), 'lat': loc.latitude, 'lon' : loc.longitude, 'news': matches.sortBy('name') } );
         let pos_ = new og.LonLat( loc.longitude, loc.latitude, user.view_distance );
 
         globe.planet.flyLonLat( pos_ );
@@ -781,7 +788,7 @@ const initAutocomplete = function() {
 
 const initButtonEvents = function() {
 
-  $('div.ogLayerSwitcherButton').append('<i class="fas fa-cog" style="color:black;";>');
+  $('div.ogLayerSwitcherButton').append('<i class="fas fa-stream" style="color:black;";>');
 
   $("#goUpButton").on("click", function() {
 
@@ -910,6 +917,7 @@ const setInfo = function(options) {
     }
 
     let type = '&nbsp;&nbsp;<span style="font-size:50%;color:darkgray"> (' + options.type + ')</span>';
+    //let headline = '<h1>' + options.name + ', ' + options.cname + type + '</h1><br/>';
     let headline = '<h1>' + options.name + type + '</h1><br/>';
 
     let wikipedia = '<a href="#"><i class="fab fa-wikipedia"></i> </a>';
@@ -926,6 +934,12 @@ const setInfo = function(options) {
     let gutenberg_books = '<li><a target="_blank" title="gutenberg" href="https://www.gutenberg.org/ebooks/search/?query=' + options.name + '"> <i class="fas fa-book"></i> gutenberg.org</a></li>';
     let natgeo = '<li><a target="_blank" title="national geographic" href="https://www.nationalgeographic.com/search/?q='+ options.name + specifier.toLowerCase() + '"> <i class="fas fa-atlas"></i> national geographic </a></li>';
 
+    let wikischool_news = '<li><a target="myframe" href="https://wikischool.org/search/%22'+ options.name + '%22#news"> <i class="fas fa-university"></i> news</a></li>';
+
+    let art = ' ' + gutenberg_books ;
+
+    let nps = ' ' + wikischool_news ;
+
     $("div#info").replaceWith(
       '<div id="info">' +
 
@@ -939,7 +953,9 @@ const setInfo = function(options) {
       '<li>' + videos + '</li>' +
 
       '<li><a href="#" title="other maps"><i class="fas fa-map"></i> </a> <ul class="nps">' + google_maps + google_earth + streetview + '</li></ul>' +
-      '<li><a href="#" title="literature"><i class="fas fa-book"></i> </a> <ul class="nps">' + google_books + archiveorg + gutenberg_books + natgeo + '</li></ul>' +
+      '<li><a href="#" title="news"><i class="far fa-newspaper"></i> </a> <ul class="nps">' + nps + '</li></ul>' +
+      '<li><a href="#" title="texts"><i class="fas fa-book"></i> </a> <ul class="nps">' + google_books + archiveorg + gutenberg_books + natgeo + '</li></ul>' +
+      '<li><a href="#" title="art"><i class="fas fa-palette"></i> </a> <ul class="nps">' + art + '</li></ul>' +
 
       '<li>' + searx + '</li>' +
       tribes + 
@@ -964,7 +980,7 @@ const setInfo = function(options) {
     let wikipedia_demographics = '<a target="myframe" href="https://en.m.wikipedia.org/wiki/Demographics_of_' + user.state + '"> <i class="fab fa-wikipedia-w"></i> demographics  </a>';
     let wikipedia_history = '<a target="myframe" href="https://en.m.wikipedia.org/wiki/History_of_' + user.state + '"> <i class="fab fa-wikipedia-w"></i> history </a>';
     let wikipedia_culture = '<a target="myframe" href="https://en.m.wikipedia.org/wiki/Culture_of_' + user.state + '"> <i class="fab fa-wikipedia-w"></i> culture </a>';
-    let wikipedia_art = '<a target="myframe" href="https://en.m.wikipedia.org/wiki/Art_of_' + user.state + '"> <i class="fab fa-wikipedia-w"></i> art  </a>';
+    let wikipedia_art = '<a target="myframe" title="wikipedia art" href="https://en.m.wikipedia.org/wiki/Art_of_' + user.state + '"> <i class="fab fa-wikipedia-w"></i> art  </a>';
     let wikipedia_search = '<a target="myframe" href="https://en.m.wikipedia.org/w/index.php?title=Special:Search&search=%22' + user.state + ', ' + user.cname + '%22&fulltext=Search"> <i class="fab fa-wikipedia-w"></i> search  </a>';
 
     let wikischool = '<a href="#"><i class="fas fa-wikischool"></i> </a>';
@@ -981,18 +997,20 @@ const setInfo = function(options) {
     let google_earth = '<li><a target="_blank" title="google earth" href="https://earth.google.com/web/@' + options.lat + ',' + options.lon + ',146.726a,'+ user.view_distance +'d,50y,0h,25t,0r"> <i class="fab fa-google"></i> earth</a></li>';
 
     let travel = '<a target="myframe" title="travel" href="https://www.tripadvisor.com/Search?q=' + user.state + ', ' + user.cname + '"> <i class="fas fa-suitcase"></i>&nbsp; </a>';
-    let art = '<a target="_blank" title="art" href="https://artsandculture.google.com/search?q=' + user.state + ', ' + user.cname + '"> <i class="fas fa-palette"></i>&nbsp; </a>';
 
     let google_books = '<li><a target="myframe" href="https://wikischool.org/search/' + user.state + ', ' + user.cname + '#g.books"> <i class="fas fa-book"></i> google books</a></li>';
     let archiveorg = '<li><a target="myframe" title="archive.org" href="https://archive.org/search.php?query=' + user.state + ', ' + user.cname + '"> <i class="fas fa-archive"></i> archive.org</a></li>';
     let gutenberg_books = '<li><a target="_blank" title="gutenberg" href="https://www.gutenberg.org/ebooks/search/?query=' + user.state + '"> <i class="fas fa-book"></i> gutenberg.org</a></li>';
     let natgeo = '<li><a target="_blank" title="national geographic" href="https://www.nationalgeographic.com/search/?q='+ user.state + '"> <i class="fas fa-atlas"></i> national geographic </a></li>';
 
+    let google_art = '<li><a target="_blank" title="google art" href="https://artsandculture.google.com/search?q=' + user.state + ', ' + user.cname + '"> <i class="fab fa-google"></i> art</a></li>';
+
     //let architecture = '<a target="myframe" title="architecture" href="https://worldarchitecture.org/search/?q='+  user.state + ', ' + user.cname + '"> <i class="fab fa-fort-awesome"></i>&nbsp; </a>';
     let tribes = '<li class="nps"><a target="_blank" title="native people" href="https://www.culturalsurvival.org/search/node?keys='+ user.state + '"> <i class="fas fa-child"></i> indigenous news</a></li>';
     let gdelt = '';
 
-    let nps = ' ' + gdelt + tribes;
+    let wikischool_news = '<li><a target="myframe" href="https://wikischool.org/search/' + user.state + ', ' + user.cname + '#news"> <i class="fas fa-university"></i> news</a></li>';
+    let nps = ' ' + wikischool_news + gdelt + tribes ;
 
     if ( options.news.length > 0 ){
 
@@ -1017,8 +1035,8 @@ const setInfo = function(options) {
       '<li>' + radio + '</li>' +
       '<li><a href="#" title="other maps"><i class="fas fa-map"></i> </a> <ul class="nps">' + google_maps + google_earth + streetview + '</li></ul>' +
       '<li><a href="#" title="news"><i class="far fa-newspaper"></i> </a> <ul class="nps">' + nps + '</li></ul>' +
-      '<li><a href="#" title="literature"><i class="fas fa-book"></i> </a> <ul class="nps">' + google_books + archiveorg + gutenberg_books + natgeo + '</li></ul>' +
-      '<li>' + art + '</li>' +
+      '<li><a href="#" title="literature"><i class="fas fa-book"></i> </a> <ul class="nps">' + google_books + archiveorg + natgeo + '</li></ul>' +
+      '<li><a href="#" title="art"><i class="fas fa-palette"></i> </a> <ul class="nps">' + wikipedia_art + google_art + gutenberg_books + '</li></ul>' +
       '<li>' + travel + '</li>' +
       //'<li>' + architecture + '</li>' +
       '<li>' + searx + '</li>' +
@@ -1041,7 +1059,7 @@ const setInfo = function(options) {
     let wikipedia_demographics = '<a target="myframe" href="https://en.m.wikipedia.org/wiki/Demographics_of_' + user.cname + '"> <i class="fab fa-wikipedia-w"></i> demographics  </a>';
     let wikipedia_history = '<a target="myframe" href="https://en.m.wikipedia.org/wiki/History_of_' + user.cname + '"> <i class="fab fa-wikipedia-w"></i> history </a>';
     let wikipedia_culture = '<a target="myframe" href="https://en.m.wikipedia.org/wiki/Culture_of_' + user.cname + '"> <i class="fab fa-wikipedia-w"></i> culture </a>';
-    let wikipedia_art = '<a target="myframe" href="https://en.m.wikipedia.org/wiki/Art_of_' + user.cname + '"> <i class="fab fa-wikipedia-w"></i> art  </a>';
+    let wikipedia_art = '<a target="myframe" title="wikipedia art" href="https://en.m.wikipedia.org/wiki/Art_of_' + user.cname + '"> <i class="fab fa-wikipedia-w"></i> art  </a>';
     let wikipedia_search = '<a target="myframe" href="https://en.m.wikipedia.org/w/index.php?title=Special:Search&search=%22' + user.cname + '%22&fulltext=Search"> <i class="fab fa-wikipedia-w"></i> search  </a>';
 
     let wikischool = '<a href="#"><i class="fas fa-wikischool"></i> </a>';
@@ -1052,11 +1070,9 @@ const setInfo = function(options) {
     let searx = '<a target="_blank" title="search" href="' + user.searx_host + '/?q=' + user.cname + '"> <i class="fab fa-searchengin"></i>&nbsp; </a>';
     let radio = '<a target="myframe" title="radio stations" href="https://tunein.com/search/?query=' + user.cname.toLowerCase() + '"> <i class="fas fa-volume-up"></i>&nbsp; </a>';
     let travel = '<a target="myframe" title="travel" href="https://www.tripadvisor.com/Search?q=' + user.cname.toLowerCase() + '"> <i class="fas fa-suitcase"></i>&nbsp; </a>';
-    let art = '<a target="_blank" title="art" href="https://artsandculture.google.com/search?q=' + user.cname.toLowerCase() + '"> <i class="fas fa-palette"></i>&nbsp; </a>';
 
     let google_books = '<li><a target="myframe" href="https://wikischool.org/search/' + user.cname.toLowerCase() + '#g.books"> <i class="fas fa-book"></i> google books</a></li>';
     let archiveorg = '<li><a target="myframe" title="archive.org" href="https://archive.org/search.php?query=' + user.cname.toLowerCase() + '"> <i class="fas fa-archive"></i> archive.org</a></li>';
-    let gutenberg_books = '<li><a target="_blank" title="gutenberg" href="https://www.gutenberg.org/ebooks/search/?query=' + user.cname.toLowerCase() + '"> <i class="fas fa-book"></i> gutenberg.org</a></li>';
     let natgeo = '<li><a target="_blank" title="national geographic" href="https://www.nationalgeographic.com/search/?q='+ user.cname + '"> <i class="fas fa-atlas"></i> national geographic </a></li>';
 
     //let architecture = '<a target="myframe" title="architecture" href="https://worldarchitecture.org/search/?q='+ user.cname.toLowerCase() + '"> <i class="fab fa-fort-awesome"></i>&nbsp; </a>';
@@ -1068,7 +1084,12 @@ const setInfo = function(options) {
     let gdelt_cname = user.cname.replace(/\s/g, '');
     let gdelt  = '<li class="nps"><a target="myframe" href="https://api.gdeltproject.org/api/v1/search_ftxtsearch/search_ftxtsearch?query=sourcecountry:' + gdelt_cname +  '&output=artimglist&outputtype=english&trans=googtrans&maxrows=100&dropdup"> <i class="fas fa-star"></i> GDELT headlines</a></li>';
 
-    let nps = ' ' + gdelt + tribes;
+    let google_art = '<li><a target="_blank" title="google art" href="https://artsandculture.google.com/search?q=' + user.cname + '"> <i class="fab fa-google"></i> art</a></li>';
+    let gutenberg_books = '<li><a target="_blank" title="gutenberg" href="https://www.gutenberg.org/ebooks/search/?query=' + user.cname.toLowerCase() + '"> <i class="fas fa-book"></i> gutenberg.org</a></li>';
+
+    let wikischool_news = '<li><a target="myframe" href="https://wikischool.org/search/%22'+ user.cname.toLowerCase() + '%22#news"> <i class="fas fa-university"></i> news</a></li>';
+
+    let nps = ' ' + wikischool_news + gdelt + tribes;
 
     if ( options.news.length != undefined && options.news.length > 0 ){
 
@@ -1098,15 +1119,10 @@ const setInfo = function(options) {
       '<li><a href="#" title="other maps"><i class="fas fa-map"></i> </a> <ul class="nps">' + google_maps + google_earth + streetview + '</li></ul>' +
       '<li><a href="#" title="news"><i class="far fa-newspaper"></i> </a> <ul class="nps">' + nps + '</li></ul>' +
       '<li><a href="#" title="literature"><i class="fas fa-book"></i> </a> <ul class="nps">' + google_books + archiveorg + gutenberg_books + natgeo + '</li></ul>' +
-      '<li>' + art + '</li>' +
-      //'<li>' + natgeo + '</li>' +
-      //'<li>' + books + '</li>' +
-      //'<li>' + archiveorg + '</li>' +
+      '<li><a href="#" title="art"><i class="fas fa-palette"></i> </a> <ul class="nps">' + wikipedia_art + google_art + gutenberg_books + '</li></ul>' +
       '<li>' + travel + '</li>' +
       //'<li>' + architecture + '</li>' +
-      //'<li>' + tribes + '</li>' +
       '<li>' + searx + '</li>' +
-      //'<li>' + gdelt + '</li>' +
       //'<li><a href="#" title="wikischool menu"><i class="fas fa-university"></i></a> <ul> <li>' + wikischool + '</li> <li>' + wikischool_main + ' </li> </ul> ' +
 
       '</nav>' +
@@ -1121,7 +1137,9 @@ const setInfo = function(options) {
     let state_name = '';
 
     let web_images = '';
-    let nps = '';
+
+    let wikischool_news = '<li><a target="myframe" href="https://wikischool.org/search/%22' + options.city_latin + '%22,%20' + state_name + ', ' + user.cname + '#news"> <i class="fas fa-university"></i> news</a></li>';
+    let nps = '' + wikischool_news ;
 
     if ( user.state !== '') { // state city
 
@@ -1163,13 +1181,12 @@ const setInfo = function(options) {
     let wikipedia_demographics = '<a target="myframe" href="https://en.m.wikipedia.org/wiki/Demographics_of_' + options.city_latin + '"> <i class="fab fa-wikipedia-w"></i> demographics  </a>';
     let wikipedia_history = '<a target="myframe" href="https://en.m.wikipedia.org/wiki/History_of_' + options.city_latin + state_name + '"> <i class="fab fa-wikipedia-w"></i> history </a>';
     let wikipedia_culture = '<a target="myframe" href="https://en.m.wikipedia.org/wiki/Culture_of_' + options.city_latin + state_name + '"> <i class="fab fa-wikipedia-w"></i> culture </a>';
-    let wikipedia_art = '<a target="myframe" href="https://en.m.wikipedia.org/wiki/Art_of_' + options.city_latin + state_name + '"> <i class="fab fa-wikipedia-w"></i> art  </a>';
+    let wikipedia_art = '<a target="myframe" title="wikipedia art" href="https://en.m.wikipedia.org/w/index.php?search=%22' + options.city_latin + '%22' + state_name + '%20art&title=Special:Search&profile=advanced&fulltext=1"> <i class="fab fa-wikipedia-w"></i> art  </a>';
     let wikipedia_search = '<a target="myframe" href="https://en.m.wikipedia.org/w/index.php?title=Special:Search&search=%22' + options.city_latin + state_name + '%22&fulltext=Search"> <i class="fab fa-wikipedia-w"></i> search  </a>';
 
     let wikischool = '<a href="#"><i class="fas fa-university"></i> </a>';
     let wikischool_main = '<a target="myframe" href="https://wikischool.org/search/' + options.city_latin + state_name + ',%20' + user.cname + '"> <i class="fas fa-university"></i> main </a>';
     let wikischool_wikipedia = '<a target="myframe" href="https://wikischool.org/search/%22' + options.city_latin + state_name + '%22,%20' + user.cname + '#wikipedia"> <i class="fas fa-university"></i> wikipedia</a>';
-    let wikischool_news = '<a target="myframe" href="https://wikischool.org/search/%22' + options.city_latin + '%22,%20' + state_name + ', ' + user.cname + '#news"> <i class="fas fa-university"></i> news</a>';
     let wikischool_youtube = '<a target="myframe" href="https://wikischool.org/search/%22' + options.city_latin + '%22,%20' + state_name + ', ' + user.cname + '#youtube"> <i class="fas fa-university"></i> youtube</a>';
 
     let videos = '<a target="myframe" title="videos" href="https://toogl.es/#/search/' + encodeURI( options.city_latin + state_name + ', ' + user.cname) + '"> <i class="fas fa-video"></i>&nbsp; </a>';
@@ -1177,7 +1194,6 @@ const setInfo = function(options) {
     let radio = '<a target="myframe" title="radio stations" href="https://tunein.com/search/?query=' + options.city_latin + '"> <i class="fas fa-volume-up"></i>&nbsp; </a>';
 
     let travel = '<a target="myframe" title="travel" href="https://www.tripadvisor.com/Search?q=%22' + options.city_latin + state_name + '%22, ' + user.cname + '"> <i class="fas fa-suitcase"></i>&nbsp; </a>';
-    let art = '<a target="_blank" title="art" href="https://artsandculture.google.com/search?q=' + options.city_latin + state_name + ', ' + user.cname + '"> <i class="fas fa-palette"></i>&nbsp; </a>';
 
     let google_books = '<li><a target="myframe" href="https://wikischool.org/search/%22' + options.city_latin + state_name + '%22, ' + user.cname + '#g.books"> <i class="fas fa-book"></i> google books</a></li>';
     let archiveorg = '<li><a target="myframe" title="archive.org" href="https://archive.org/search.php?query=' + encodeURI( options.city_latin + state_name + ', ' + user.cname) + '"> <i class="fas fa-archive"></i> archive.org</a></li>';
@@ -1185,6 +1201,8 @@ const setInfo = function(options) {
     let natgeo = '<li><a target="_blank" title="national geographic" href="https://www.nationalgeographic.com/search/?q='+ options.city_latin + state_name + '"> <i class="fas fa-atlas"></i> national geographic </a></li>';
 
     //let architecture = '<a target="myframe" title="architecture" href="https://worldarchitecture.org/search/?q='+ options.city_latin + '"> <i class="fab fa-fort-awesome"></i>&nbsp; </a>';
+
+    let google_art = '<li><a target="_blank" title="google art" href="https://artsandculture.google.com/search?q=' + options.city_latin + state_name + '"> <i class="fab fa-google"></i> art</a></li>';
 
     let gdelt_cname = user.cname.replace(/\s/g, '');
     let gdelt  = '<li class="nps"><a target="myframe" href="https://api.gdeltproject.org/api/v1/search_ftxtsearch/search_ftxtsearch?query=sourcecountry:' + gdelt_cname + '&output=artimglist&outputtype=english&trans=googtrans&maxrows=100&dropdup"> <i class="fas fa-star"></i> GDELT headlines </a></li>';
@@ -1210,12 +1228,9 @@ const setInfo = function(options) {
       '<li>' + radio + '</li>' +
       '<li><a href="#" title="other maps"><i class="fas fa-map"></i> </a> <ul class="nps">' + google_maps + google_earth + streetview + '</li></ul>' +
       '<li><a href="#" title="news"><i class="far fa-newspaper"></i> </a> <ul class="nps">' + gdelt + nps + '</li></ul>' +
-      '<li><a href="#" title="literature"><i class="fas fa-book"></i> </a> <ul class="nps">' + google_books + archiveorg + gutenberg_books + natgeo + '</li></ul>' +
-      //'<li>' + books + '</li>' +
-      //'<li>' + natgeo + '</li>' +
-      '<li>' + art + '</li>' +
+      '<li><a href="#" title="literature"><i class="fas fa-book"></i> </a> <ul class="nps">' + google_books + archiveorg  + natgeo + '</li></ul>' +
+      '<li><a href="#" title="art"><i class="fas fa-palette"></i> </a> <ul class="nps">' + wikipedia_art + google_art + gutenberg_books + '</li></ul>' +
       '<li>' + searx + '</li>' +
-      //'<li>' + archiveorg + '</li>' +
       //'<li>' + architecture + '</li>' +
       //'<li><a href="#" title="wikischool menu"><i class="fas fa-university"></i></a> <ul>  <li>' + wikischool_main + ' </li> </ul> ' +
 
@@ -1297,7 +1312,7 @@ const checkHashParams = function() {
         // fetch newspapers of this country
         db.news.where('country').equals(user.ccode2).toArray().then(function(matches) {
 
-          setInfo( { 'type': 'city', 'city_latin': latinize( user.geohash.name ), 'lat': user.geohash.lat, 'lon' : user.geohash.lon, 'news': matches.sortBy('name') } );
+          setInfo( { 'type': 'city', 'city_latin': latinize( user.geohash.name ), 'cname': user.cname, 'lat': user.geohash.lat, 'lon' : user.geohash.lon, 'news': matches.sortBy('name') } );
           let pos_ = new og.LonLat( user.geohash.lon, user.geohash.lat, user.view_distance );
           globe.planet.flyLonLat( pos_ );
 
