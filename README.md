@@ -18,4 +18,4 @@ The code utilizes the amazing [OpenGlobus.org](http://openglobus.org/) library (
 
 [<img width="50%" src="https://wikischool.org/_media/browserstack.jpg">](https://www.browserstack.com/)
 
-[BrowserStack](https://www.browserstack.com/) kindly provides us with free browser testing.
+[BrowserStack](https://www.browserstack.com/) kindly provides tools for browser testing.
